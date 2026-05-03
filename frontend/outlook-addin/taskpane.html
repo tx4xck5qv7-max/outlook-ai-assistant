@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <title>AI Email Assistant</title>
+    <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+    <script src="taskpane.js"></script>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            padding: 15px; 
+            margin: 0;
+        }
+        button { 
+            padding: 10px 20px; 
+            background: #0078d4; 
+            color: white; 
+            border: none; 
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button:hover { background: #005a9e; }
+        button:disabled { background: #cccccc; cursor: not-allowed; }
+        .result { 
+            margin-top: 15px; 
+            padding: 10px; 
+            background: #f0f0f0; 
+            border-radius: 4px;
+        }
+        .error { 
+            color: red; 
+            padding: 10px;
+            background: #ffe0e0;
+            border-radius: 4px;
+        }
+        .loading { color: #666; }
+        ol { padding-left: 20px; }
+        li { margin: 5px 0; }
+    </style>
+</head>
+<body>
+    <h3>AI Email Assistant</h3>
+    <button id="analyzeBtn">Analyze Email</button>
+    
+    <div id="loading" style="display: none;" class="loading">
+        <p>Analyzing email...</p>
+    </div>
+    
+    <div id="results" style="display: none;">
+        <div class="result">
+            <h4>Summary:</h4>
+            <p id="summary"></p>
+        </div>
+        <div class="result">
+            <h4>Reply Suggestions:</h4>
+            <ol id="suggestions"></ol>
+        </div>
+    </div>
+    
+    <div id="error" style="display: none;" class="error"></div>
+</body>
+</html>
