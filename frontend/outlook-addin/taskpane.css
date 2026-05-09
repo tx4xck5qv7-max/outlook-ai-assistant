@@ -28,6 +28,32 @@ h1 {
   font-size: 13px;
 }
 
+.privacyNotice {
+  background: #eef6f3;
+  border: 1px solid #cfe7df;
+  border-radius: 8px;
+  color: #275548;
+  font-size: 12px;
+  line-height: 1.4;
+  margin-bottom: 14px;
+  padding: 10px 12px;
+}
+
+.privacyStatus {
+  color: #4b5563;
+  font-size: 12px;
+  line-height: 1.4;
+  margin: -6px 0 14px;
+}
+
+.privacyStatusWarning {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 8px;
+  color: #7c2d12;
+  padding: 8px 10px;
+}
+
 button {
   border: none;
   border-radius: 10px;
