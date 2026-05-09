@@ -212,13 +212,29 @@ button:disabled {
 .replyButton {
   width: 100%;
   text-align: left;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   background: #f3f4f6;
   color: black;
 }
 
 .replyButton:hover {
   background: #e5e7eb;
+}
+
+.replyGroup {
+  margin-bottom: 10px;
+}
+
+.replyDraftButton {
+  background: #eef6ff;
+  color: #005fa3;
+  font-size: 12px;
+  padding: 8px 10px;
+  width: 100%;
+}
+
+.replyDraftButton:hover {
+  background: #dbeafe;
 }
 
 #status {

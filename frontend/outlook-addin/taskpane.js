@@ -97,6 +97,27 @@ function buildHandoffBrief(data) {
   ].join("\n");
 }
 
+function escapeHtml(value) {
+
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function buildReplyHtml(replyText) {
+
+  const safeText =
+    String(replyText || "")
+      .trim()
+      .slice(0, 30000);
+
+  return escapeHtml(safeText)
+    .replace(/\r?\n/g, "<br>");
+}
+
 async function copyText(text, status, successMessage) {
 
   try {
@@ -106,6 +127,79 @@ async function copyText(text, status, successMessage) {
     status.textContent =
       "Kopieren nicht moeglich";
   }
+}
+
+async function openReplyDraft(replyText, status) {
+
+  const item =
+    window.Office &&
+    Office.context &&
+    Office.context.mailbox
+      ? Office.context.mailbox.item
+      : null;
+
+  if (!item) {
+    await copyText(
+      replyText,
+      status,
+      "Outlook-Kontext nicht verfuegbar. Antwort kopiert."
+    );
+    return;
+  }
+
+  const htmlBody =
+    buildReplyHtml(replyText);
+
+  if (typeof item.displayReplyFormAsync === "function") {
+    item.displayReplyFormAsync(
+      {
+        htmlBody
+      },
+      function(result) {
+
+        if (
+          result &&
+          result.status === Office.AsyncResultStatus.Failed
+        ) {
+          copyText(
+            replyText,
+            status,
+            "Antwortformular nicht verfuegbar. Antwort kopiert."
+          );
+          return;
+        }
+
+        status.textContent =
+          "Outlook-Antwortentwurf geoeffnet";
+      }
+    );
+    return;
+  }
+
+  if (typeof item.displayReplyForm === "function") {
+    try {
+      item.displayReplyForm({
+        htmlBody
+      });
+
+      status.textContent =
+        "Outlook-Antwortentwurf geoeffnet";
+      return;
+    } catch (err) {
+      await copyText(
+        replyText,
+        status,
+        "Antwortformular nicht verfuegbar. Antwort kopiert."
+      );
+      return;
+    }
+  }
+
+  await copyText(
+    replyText,
+    status,
+    "Antwortformular nicht verfuegbar. Antwort kopiert."
+  );
 }
 
 async function postJson(path, payload) {
@@ -610,6 +704,12 @@ async function generateAI() {
 
         replySuggestions.forEach((reply) => {
 
+          const replyGroup =
+            document.createElement("div");
+
+          replyGroup.className =
+            "replyGroup";
+
           const btn =
             document.createElement("button");
 
@@ -626,7 +726,29 @@ async function generateAI() {
             );
           };
 
-          suggestions.appendChild(btn);
+          const draftBtn =
+            document.createElement("button");
+
+          draftBtn.className =
+            "replyDraftButton";
+
+          draftBtn.type =
+            "button";
+
+          draftBtn.textContent =
+            "Als Outlook-Antwort öffnen";
+
+          draftBtn.onclick = () => {
+            openReplyDraft(
+              reply,
+              status
+            );
+          };
+
+          replyGroup.appendChild(btn);
+          replyGroup.appendChild(draftBtn);
+
+          suggestions.appendChild(replyGroup);
         });
 
         status.textContent =
