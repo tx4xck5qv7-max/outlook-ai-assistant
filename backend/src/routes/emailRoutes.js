@@ -3,8 +3,14 @@ const express = require("express");
 const router = express.Router();
 
 const {
-  analyzeEmail
+  analyzeEmail,
+  previewPrivacy
 } = require("../controllers/emailController");
+
+router.post(
+  "/privacy-preview",
+  previewPrivacy
+);
 
 router.post(
   "/analyze",

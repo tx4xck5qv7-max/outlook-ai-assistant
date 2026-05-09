@@ -36,7 +36,7 @@ function sanitizeEmailWithReport(text) {
 
   // FIRMENNAMEN MIT RECHTSFORM
   mask(
-    /\b[A-ZÄÖÜ][A-Za-zÄÖÜäöüß&.-]+(?:\s+[A-ZÄÖÜ][A-Za-zÄÖÜäöüß&.-]+){0,3}\s+(GmbH|AG|UG|KG|OHG|Ltd|LLC|Inc)\b/g,
+    /\b\p{Lu}[\p{L}&.-]+(?:\s+\p{Lu}[\p{L}&.-]+){0,3}\s+(GmbH|AG|UG|KG|OHG|Ltd|LLC|Inc)\b/gu,
     "[COMPANY]",
     "Firmennamen"
   );
@@ -70,10 +70,25 @@ function sanitizeEmailWithReport(text) {
   );
 
   // PERSONENNAMEN
-  mask(
-    /\b([A-ZÄÖÜ][a-zäöüß]+\s[A-ZÄÖÜ][a-zäöüß]+)\b/g,
-    "[NAME]",
-    "Personennamen"
+  const commonCapitalizedPhrases = new Set([
+    "Vielen Dank",
+    "Guten Tag",
+    "Guten Morgen",
+    "Guten Abend",
+    "Beste Gruesse",
+    "Freundliche Gruesse"
+  ]);
+
+  clean = clean.replace(
+    /\b(\p{Lu}\p{Ll}+\s\p{Lu}\p{Ll}+)\b/gu,
+    (match) => {
+      if (commonCapitalizedPhrases.has(match)) {
+        return match;
+      }
+
+      detected.add("Personennamen");
+      return "[NAME]";
+    }
   );
 
   // HTML

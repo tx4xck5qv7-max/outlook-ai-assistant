@@ -17,7 +17,7 @@ const allowedOrigins = new Set([
 ]);
 
 const rateLimitWindowMs = 5 * 60 * 1000;
-const rateLimitMaxRequests = 30;
+const rateLimitMaxRequests = 60;
 const requestCounts = new Map();
 
 function rateLimit(req, res, next) {
@@ -96,7 +96,10 @@ app.get("/health", (req, res) => {
     status: "ok",
     storage: "none",
     transport: "https",
-    api: "ready"
+    api: "ready",
+    privacyPreview: "ready",
+    maxEmailLength: 200000,
+    rateLimit: "60 requests per 5 minutes"
   });
 });
 

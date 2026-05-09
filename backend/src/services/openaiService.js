@@ -14,6 +14,19 @@ const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
+const openAIModel =
+  process.env.OPENAI_MODEL || "gpt-4.1-mini";
+
+const configuredTemperature =
+  Number.parseFloat(
+    process.env.OPENAI_TEMPERATURE || "0.3"
+  );
+
+const openAITemperature =
+  Number.isFinite(configuredTemperature)
+    ? configuredTemperature
+    : 0.3;
+
 function getString(value, fallback) {
   return typeof value === "string" && value.trim()
     ? value.trim()
@@ -84,11 +97,11 @@ async function getAIResponse(emailContent) {
 
   const completion = await client.chat.completions.create({
 
-    model: "gpt-4.1-mini",
+    model: openAIModel,
 
     store: false,
 
-    temperature: 0.3,
+    temperature: openAITemperature,
 
     response_format: {
       type: "json_object"
