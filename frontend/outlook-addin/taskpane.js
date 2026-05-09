@@ -3,10 +3,14 @@ const API_BASE_URL =
 
 const REQUEST_TIMEOUT_MS = 50000;
 
+const HEALTH_TIMEOUT_MS = 5000;
+
 const SENSITIVE_CONFIRMATION_MS =
   5 * 60 * 1000;
 
 let pendingSensitiveConfirmation = null;
+
+let lastSystemHealth = null;
 
 const PREFERENCES_STORAGE_KEY =
   "outlookAiAssistant.preferences";
@@ -397,6 +401,250 @@ function setupPreferencePersistence() {
       resetPreferences
     );
   }
+}
+
+function setSystemHealthState(message, state) {
+
+  const systemHealthBox =
+    document.getElementById("systemHealthBox");
+
+  if (!systemHealthBox) {
+    return;
+  }
+
+  systemHealthBox.textContent = message;
+
+  if (state) {
+    applyMetricState(
+      systemHealthBox,
+      state,
+      "risk"
+    );
+  }
+}
+
+function getSystemHealthSummary() {
+
+  if (
+    lastSystemHealth &&
+    lastSystemHealth.status === "ok"
+  ) {
+    return [
+      "OK",
+      `Transport ${lastSystemHealth.transport || "https"}`,
+      `Speicherung ${lastSystemHealth.storage || "none"}`
+    ].join(" / ");
+  }
+
+  return "Nicht bestaetigt";
+}
+
+async function checkSystemHealth() {
+
+  if (typeof fetch !== "function") {
+    setSystemHealthState(
+      "Nicht geprueft",
+      "MEDIUM"
+    );
+    return;
+  }
+
+  const controller =
+    new AbortController();
+
+  const timeoutId =
+    window.setTimeout(() => {
+      controller.abort();
+    }, HEALTH_TIMEOUT_MS);
+
+  try {
+    const response =
+      await fetch(
+        `${API_BASE_URL}/health`,
+        {
+          method: "GET",
+          cache: "no-store",
+          signal: controller.signal
+        }
+      );
+
+    const data =
+      await response.json();
+
+    if (!response.ok || data.status !== "ok") {
+      throw new Error("Systemstatus nicht bereit");
+    }
+
+    lastSystemHealth = data;
+
+    setSystemHealthState(
+      "Backend OK",
+      "LOW"
+    );
+  } catch (err) {
+    lastSystemHealth = null;
+
+    setSystemHealthState(
+      "Pruefen",
+      "MEDIUM"
+    );
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
+}
+
+function setupTaskpane() {
+  setupPreferencePersistence();
+  checkSystemHealth();
+}
+
+function getAuditValue(value, fallback) {
+  return typeof value === "string" && value.trim()
+    ? value.trim()
+    : fallback;
+}
+
+function getAuditList(value, fallback) {
+  const items =
+    Array.isArray(value)
+      ? value
+        .filter((item) => (
+          typeof item === "string" &&
+          item.trim().length > 0
+        ))
+        .map((item) => item.trim())
+      : [];
+
+  return items.length
+    ? items
+    : fallback;
+}
+
+function getAuditTimestamp() {
+  try {
+    return new Date().toLocaleString("de-DE");
+  } catch (err) {
+    return new Date().toISOString();
+  }
+}
+
+function buildAnalysisAuditLog(data, privacy, context) {
+
+  const safeData =
+    data && typeof data === "object"
+      ? data
+      : {};
+
+  const safePrivacy =
+    privacy && typeof privacy === "object"
+      ? privacy
+      : {};
+
+  const safeContext =
+    context && typeof context === "object"
+      ? context
+      : {};
+
+  const sensitivity =
+    safePrivacy.sensitivity &&
+    typeof safePrivacy.sensitivity === "object"
+      ? safePrivacy.sensitivity
+      : {
+        level: "LOW",
+        categories: [],
+        requiresReview: false
+      };
+
+  const detected =
+    getAuditList(
+      safePrivacy.detected,
+      ["keine"]
+    );
+
+  const categories =
+    getAuditList(
+      sensitivity.categories,
+      ["keine"]
+    );
+
+  const metadata =
+    safeData.metadata &&
+    typeof safeData.metadata === "object"
+      ? safeData.metadata
+      : {};
+
+  const aiStatus =
+    getAuditValue(
+      safeContext.aiStatus,
+      safeData.summary
+        ? "Analyse abgeschlossen"
+        : "Keine KI-Analyse ausgefuehrt"
+    );
+
+  const storagePolicy =
+    "Keine Email-Inhalte im Add-in oder Backend gespeichert";
+
+  return [
+    "Analyseprotokoll (ohne Email-Inhalte)",
+    "",
+    `Zeitpunkt: ${getAuditTimestamp()}`,
+    `Systemstatus: ${getSystemHealthSummary()}`,
+    "Backend: https://localhost:3001",
+    `Speicherung: ${storagePolicy}`,
+    `KI-Status: ${aiStatus}`,
+    `Datenschutz: ${
+      safePrivacy.anonymized
+        ? "Anonymisierung angewendet"
+        : "Keine typischen Muster maskiert"
+    }`,
+    `Maskierte Muster: ${detected.join(", ")}`,
+    `Sensitivitaet: ${sensitivity.level || "LOW"}`,
+    `Sensible Kategorien: ${categories.join(", ")}`,
+    `Review erforderlich: ${
+      sensitivity.requiresReview
+        ? "ja"
+        : "nein"
+    }`,
+    `Original-Laenge: ${safePrivacy.originalLength || 0}`,
+    `Anonymisierte Laenge: ${safePrivacy.sanitizedLength || 0}`,
+    "",
+    "Analyseparameter:",
+    `Antwortstil: ${
+      safeContext.responseTone ||
+      metadata.responseTone ||
+      "-"
+    }`,
+    `Antwortsprache: ${
+      safeContext.replyLanguage ||
+      metadata.replyLanguage ||
+      "-"
+    }`,
+    `Analysefokus: ${
+      safeContext.analysisFocus ||
+      metadata.analysisFocus ||
+      "-"
+    }`,
+    "",
+    "Ergebnis-Metadaten:",
+    `Typ: ${safeData.emailType || "Nicht analysiert"}`,
+    `Zustaendig: ${
+      safeData.recommendedOwner ||
+      "Nicht analysiert"
+    }`,
+    `Prioritaet: ${safeData.priority || "Nicht analysiert"}`,
+    `Risiko: ${safeData.riskLevel || "Nicht analysiert"}`,
+    `KI-Sicherheit: ${
+      safeData.confidenceLevel ||
+      "Nicht analysiert"
+    }`,
+    `Kalender-Risiko: ${
+      safeData.calendarConflictRisk ||
+      "Nicht analysiert"
+    }`,
+    "",
+    "Kontrollhinweis:",
+    "Dieses Protokoll enthaelt keine Originalmail, keine Empfaenger und keine Antwortinhalte."
+  ].join("\n");
 }
 
 function formatBriefList(title, items) {
@@ -1447,6 +1695,12 @@ async function generateAI() {
   const privacyReportCopyBtn =
     document.getElementById("privacyReportCopyBtn");
 
+  const analysisAuditBox =
+    document.getElementById("analysisAuditBox");
+
+  const analysisAuditCopyBtn =
+    document.getElementById("analysisAuditCopyBtn");
+
   const priorityBox =
     document.getElementById("priorityBox");
 
@@ -1535,6 +1789,10 @@ async function generateAI() {
     "Datenschutzbericht wird vorbereitet...";
   privacyReportCopyBtn.disabled = true;
   privacyReportCopyBtn.onclick = null;
+  analysisAuditBox.textContent =
+    "Analyseprotokoll wird vorbereitet...";
+  analysisAuditCopyBtn.disabled = true;
+  analysisAuditCopyBtn.onclick = null;
 
   [
     typeBox,
@@ -1603,6 +1861,11 @@ async function generateAI() {
     privacyReportBox.textContent =
       "Datenschutzbericht nur im Outlook-Kontext moeglich.";
 
+    analysisAuditBox.textContent =
+      "Analyseprotokoll nur im Outlook-Kontext moeglich.";
+
+    analysisAuditCopyBtn.disabled = true;
+
     decisionRationale.textContent =
       "Outlook-Kontext nicht verfuegbar.";
 
@@ -1621,6 +1884,7 @@ async function generateAI() {
   }
 
   let privacyChecked = false;
+  let privacyForAudit = null;
 
   Office.context.mailbox.item.body.getAsync(
     "text",
@@ -1652,6 +1916,9 @@ async function generateAI() {
               emailContent: emailText
             }
           );
+
+        privacyForAudit =
+          privacyPreview.privacy;
 
         renderPrivacyReport(
           privacyStatus,
@@ -1734,6 +2001,31 @@ async function generateAI() {
 
           sendReadinessBox.textContent =
             "Versand-Check erst nach bestaetigter Analyse verfuegbar.";
+
+          const pausedAuditText =
+            buildAnalysisAuditLog(
+              null,
+              privacyPreview.privacy,
+              {
+                aiStatus:
+                  "Pausiert: sensible Email nicht an KI gesendet",
+                responseTone,
+                replyLanguage,
+                analysisFocus
+              }
+            );
+
+          analysisAuditBox.textContent =
+            pausedAuditText;
+
+          analysisAuditCopyBtn.disabled = false;
+          analysisAuditCopyBtn.onclick = () => {
+            copyText(
+              pausedAuditText,
+              status,
+              "Analyseprotokoll kopiert"
+            );
+          };
 
           setAnalysisProgress(false);
 
@@ -1947,6 +2239,31 @@ async function generateAI() {
             privacyPreview.privacy
           );
 
+        const analysisAuditText =
+          buildAnalysisAuditLog(
+            data,
+            privacyPreview.privacy,
+            {
+              aiStatus:
+                "Analyse abgeschlossen",
+              responseTone,
+              replyLanguage,
+              analysisFocus
+            }
+          );
+
+        analysisAuditBox.textContent =
+          analysisAuditText;
+
+        analysisAuditCopyBtn.disabled = false;
+        analysisAuditCopyBtn.onclick = () => {
+          copyText(
+            analysisAuditText,
+            status,
+            "Analyseprotokoll kopiert"
+          );
+        };
+
         // ACTIONS
         renderList(
           actions,
@@ -2103,6 +2420,36 @@ async function generateAI() {
           privacyReportCopyBtn.disabled = true;
         }
 
+        const failedAuditText =
+          buildAnalysisAuditLog(
+            null,
+            privacyForAudit,
+            {
+              aiStatus:
+                "Fehler: Analyse nicht abgeschlossen",
+              responseTone,
+              replyLanguage,
+              analysisFocus
+            }
+          );
+
+        analysisAuditBox.textContent =
+          failedAuditText;
+
+        analysisAuditCopyBtn.disabled =
+          !privacyForAudit;
+
+        analysisAuditCopyBtn.onclick =
+          privacyForAudit
+            ? () => {
+              copyText(
+                failedAuditText,
+                status,
+                "Analyseprotokoll kopiert"
+              );
+            }
+            : null;
+
         decisionRationale.textContent =
           "Begruendung nicht erstellt.";
 
@@ -2126,8 +2473,8 @@ async function generateAI() {
 if (document.readyState === "loading") {
   document.addEventListener(
     "DOMContentLoaded",
-    setupPreferencePersistence
+    setupTaskpane
   );
 } else {
-  setupPreferencePersistence();
+  setupTaskpane();
 }

@@ -396,6 +396,20 @@ button:hover {
   white-space: pre-wrap;
 }
 
+.analysisAuditBox {
+  background: #f8fafc;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  color: #1f2937;
+  line-height: 1.45;
+  margin-bottom: 10px;
+  max-height: 190px;
+  overflow: auto;
+  overflow-wrap: anywhere;
+  padding: 10px;
+  white-space: pre-wrap;
+}
+
 .rationaleBox {
   background: #f8fafc;
   border: 1px solid #e5e7eb;
