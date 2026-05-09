@@ -3,7 +3,7 @@ require("dotenv").config();
 const OpenAI = require("openai");
 
 const {
-  sanitizeEmail
+  sanitizeEmailWithReport
 } = require("../utils/privacy");
 
 const {
@@ -14,11 +14,70 @@ const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
+function getString(value, fallback) {
+  return typeof value === "string" && value.trim()
+    ? value.trim()
+    : fallback;
+}
+
+function getList(value, fallback) {
+  const items =
+    Array.isArray(value)
+      ? value
+        .filter((item) => typeof item === "string" && item.trim())
+        .map((item) => item.trim())
+      : [];
+
+  return items
+    .concat(fallback)
+    .slice(0, 3);
+}
+
+function normalizeAIResponse(data) {
+  const safeData =
+    data && typeof data === "object"
+      ? data
+      : {};
+
+  return {
+    priority: getString(safeData.priority, "MEDIUM"),
+    sentiment: getString(safeData.sentiment, "NEUTRAL"),
+    salesChance: getString(safeData.salesChance, "LOW"),
+    actions: getList(safeData.actions, [
+      "Email pruefen",
+      "Naechsten Schritt festlegen",
+      "Antwort vorbereiten"
+    ]),
+    todos: getList(safeData.todos, [
+      "Email inhaltlich pruefen",
+      "Offene Punkte klaeren",
+      "Rueckmeldung vorbereiten"
+    ]),
+    summary: getString(
+      safeData.summary,
+      "Keine belastbare Zusammenfassung erhalten."
+    ),
+    followUp: getString(
+      safeData.followUp,
+      "Freundlich nach dem aktuellen Stand fragen."
+    ),
+    suggestions: getList(safeData.suggestions, [
+      "Vielen Dank fuer Ihre Nachricht. Ich pruefe den Vorgang und melde mich zeitnah zurueck.",
+      "Danke fuer die Informationen. Ich nehme die Punkte auf und gebe Ihnen schnellstmoeglich Rueckmeldung.",
+      "Vielen Dank. Ich klaere die offenen Punkte intern und komme anschliessend mit einer konkreten Antwort auf Sie zu."
+    ])
+  };
+}
+
 async function getAIResponse(emailContent) {
 
   // Datenschutz:
   // Nur anonymisierte Daten an KI
-  const cleanedEmail = sanitizeEmail(emailContent);
+  const privacyResult =
+    sanitizeEmailWithReport(emailContent);
+
+  const cleanedEmail =
+    privacyResult.clean;
 
   const prompt =
     getEmailAnalysisPrompt(cleanedEmail);
@@ -26,6 +85,8 @@ async function getAIResponse(emailContent) {
   const completion = await client.chat.completions.create({
 
     model: "gpt-4.1-mini",
+
+    store: false,
 
     temperature: 0.3,
 
@@ -49,7 +110,17 @@ async function getAIResponse(emailContent) {
   const raw =
     completion.choices[0].message.content;
 
-  return JSON.parse(raw);
+  try {
+    return {
+      ...normalizeAIResponse(JSON.parse(raw)),
+      privacy: privacyResult.report
+    };
+  } catch (err) {
+    return {
+      ...normalizeAIResponse({}),
+      privacy: privacyResult.report
+    };
+  }
 }
 
 module.exports = {

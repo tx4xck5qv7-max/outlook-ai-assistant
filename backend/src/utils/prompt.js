@@ -65,6 +65,8 @@ RULES:
 - email-focused
 - extract actual information
 - no hallucinations
+- if information is missing or ambiguous, say that it is unclear
+- do not infer real identities from anonymized placeholders
 
 Summary must include:
 - email purpose

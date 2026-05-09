@@ -2,6 +2,8 @@ const {
   getAIResponse
 } = require("../services/openaiService");
 
+const MAX_EMAIL_LENGTH = 200000;
+
 exports.analyzeEmail = async (req, res) => {
 
   try {
@@ -10,9 +12,18 @@ exports.analyzeEmail = async (req, res) => {
       emailContent
     } = req.body;
 
-    if (!emailContent) {
+    if (
+      typeof emailContent !== "string" ||
+      emailContent.trim().length === 0
+    ) {
       return res.status(400).json({
         error: "Keine Email erhalten"
+      });
+    }
+
+    if (emailContent.length > MAX_EMAIL_LENGTH) {
+      return res.status(413).json({
+        error: "Email ist zu lang fuer die lokale Analyse"
       });
     }
 

@@ -1,37 +1,79 @@
-﻿function sanitizeEmail(text) {
+function sanitizeEmailWithReport(text) {
 
-  if (!text) return "";
+  if (!text) {
+    return {
+      clean: "",
+      report: {
+        anonymized: false,
+        detected: [],
+        originalLength: 0,
+        sanitizedLength: 0
+      }
+    };
+  }
 
   let clean = text;
+  const detected = new Set();
+
+  function mask(pattern, replacement, label) {
+    clean = clean.replace(pattern, (...args) => {
+      detected.add(label);
+
+      if (typeof replacement === "function") {
+        return replacement(...args);
+      }
+
+      return replacement;
+    });
+  }
 
   // EMAILS
-  clean = clean.replace(
+  mask(
     /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi,
-    "[EMAIL]"
+    "[EMAIL]",
+    "Email-Adressen"
+  );
+
+  // FIRMENNAMEN MIT RECHTSFORM
+  mask(
+    /\b[A-ZÄÖÜ][A-Za-zÄÖÜäöüß&.-]+(?:\s+[A-ZÄÖÜ][A-Za-zÄÖÜäöüß&.-]+){0,3}\s+(GmbH|AG|UG|KG|OHG|Ltd|LLC|Inc)\b/g,
+    "[COMPANY]",
+    "Firmennamen"
   );
 
   // TELEFONNUMMERN
-  clean = clean.replace(
+  mask(
     /(\+?\d[\d\s\-]{7,}\d)/g,
-    "[PHONE]"
+    "[PHONE]",
+    "Telefonnummern"
   );
 
   // URLs
-  clean = clean.replace(
+  mask(
     /(https?:\/\/[^\s]+)/g,
-    "[LINK]"
-    );
+    "[LINK]",
+    "Links"
+  );
 
   // IBAN
-  clean = clean.replace(
+  mask(
     /[A-Z]{2}\d{2}[ ]?([A-Z0-9]{4}[ ]?){2,7}[A-Z0-9]{1,4}/g,
-    "[IBAN]"
+    "[IBAN]",
+    "IBAN"
+  );
+
+  // KUNDEN-, VERTRAGS- UND TICKETNUMMERN
+  mask(
+    /\b(kunden(?:nummer|nr\.?)|kundennr\.?|vertragsnummer|auftragsnummer|bestellnummer|ticket|case)[\s:#-]*[A-Z0-9\-\/]{3,}\b/gi,
+    (match, label) => `${label} [ID]`,
+    "Referenznummern"
   );
 
   // PERSONENNAMEN
-  clean = clean.replace(
+  mask(
     /\b([A-ZÄÖÜ][a-zäöüß]+\s[A-ZÄÖÜ][a-zäöüß]+)\b/g,
-    "[NAME]"
+    "[NAME]",
+    "Personennamen"
   );
 
   // HTML
@@ -44,7 +86,26 @@
   );
 
   clean = clean.replace(/\s{2,}/g, " ");
-  return clean.trim();
+  clean = clean.trim();
+
+  const detectedItems = Array.from(detected);
+
+  return {
+    clean,
+    report: {
+      anonymized: detectedItems.length > 0,
+      detected: detectedItems,
+      originalLength: text.length,
+      sanitizedLength: clean.length
+    }
+  };
 }
 
-module.exports = { sanitizeEmail };
+function sanitizeEmail(text) {
+  return sanitizeEmailWithReport(text).clean;
+}
+
+module.exports = {
+  sanitizeEmail,
+  sanitizeEmailWithReport
+};
