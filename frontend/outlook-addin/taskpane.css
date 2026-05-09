@@ -182,6 +182,33 @@ button:hover {
   padding: 10px;
 }
 
+.handoffBox {
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  color: #1f2937;
+  line-height: 1.45;
+  margin-bottom: 10px;
+  max-height: 190px;
+  overflow: auto;
+  padding: 10px;
+  white-space: pre-wrap;
+}
+
+.secondaryButton {
+  background: #1f2937;
+  width: 100%;
+}
+
+.secondaryButton:hover {
+  background: #111827;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 .replyButton {
   width: 100%;
   text-align: left;

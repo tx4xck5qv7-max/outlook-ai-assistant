@@ -45,6 +45,58 @@ function renderList(container, items, className, fallback, prefix) {
   });
 }
 
+function formatBriefList(title, items) {
+
+  const safeItems =
+    Array.isArray(items)
+      ? items.filter((item) => (
+        typeof item === "string" &&
+        item.trim().length > 0
+      ))
+      : [];
+
+  if (!safeItems.length) {
+    return `${title}:\n- Keine Angaben`;
+  }
+
+  return `${title}:\n` +
+    safeItems
+      .map((item) => `- ${item}`)
+      .join("\n");
+}
+
+function buildHandoffBrief(data) {
+
+  const safeData =
+    data && typeof data === "object"
+      ? data
+      : {};
+
+  return [
+    "Interne Uebergabe",
+    "",
+    `Typ: ${safeData.emailType || "-"}`,
+    `Zustaendig: ${safeData.recommendedOwner || "-"}`,
+    `Prioritaet: ${safeData.priority || "-"}`,
+    `Risiko: ${safeData.riskLevel || "-"}`,
+    `Frist: ${safeData.deadline || "Keine Frist erkannt"}`,
+    `Dringlichkeit: ${safeData.urgencyReason || "-"}`,
+    `Eskalation: ${
+      safeData.escalationRecommendation ||
+      "Keine Eskalation empfohlen."
+    }`,
+    "",
+    "Zusammenfassung:",
+    safeData.summary || "-",
+    "",
+    formatBriefList("Naechste Schritte", safeData.actions),
+    "",
+    formatBriefList("Todos", safeData.todos),
+    "",
+    formatBriefList("Risiko-Hinweise", safeData.riskFlags)
+  ].join("\n");
+}
+
 async function copyText(text, status, successMessage) {
 
   try {
@@ -257,6 +309,12 @@ async function generateAI() {
   const escalationBox =
     document.getElementById("escalationBox");
 
+  const handoffBrief =
+    document.getElementById("handoffBrief");
+
+  const handoffCopyBtn =
+    document.getElementById("handoffCopyBtn");
+
   const followUp =
     document.getElementById("followUp");
 
@@ -311,6 +369,10 @@ async function generateAI() {
   todos.innerHTML = "";
   riskFlags.innerHTML = "";
   followUp.innerHTML = "";
+  handoffBrief.textContent =
+    "Uebergabe wird vorbereitet...";
+  handoffCopyBtn.disabled = true;
+  handoffCopyBtn.onclick = null;
 
   status.textContent =
     "KI analysiert Email...";
@@ -332,6 +394,9 @@ async function generateAI() {
 
     privacyStatus.textContent =
       "Datenschutzprüfung nur im Outlook-Kontext möglich.";
+
+    handoffBrief.textContent =
+      "Outlook-Kontext nicht verfuegbar.";
 
     button.disabled = false;
     return;
@@ -470,6 +535,21 @@ async function generateAI() {
           ""
         );
 
+        const handoffText =
+          buildHandoffBrief(data);
+
+        handoffBrief.textContent =
+          handoffText;
+
+        handoffCopyBtn.disabled = false;
+        handoffCopyBtn.onclick = () => {
+          copyText(
+            handoffText,
+            status,
+            "Uebergabe kopiert"
+          );
+        };
+
         // ACTIONS
         renderList(
           actions,
@@ -566,6 +646,11 @@ async function generateAI() {
 
         status.textContent =
           err.message;
+
+        handoffBrief.textContent =
+          "Uebergabe nicht erstellt.";
+
+        handoffCopyBtn.disabled = true;
       }
 
       button.disabled = false;
