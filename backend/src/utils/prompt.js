@@ -1,4 +1,23 @@
-function getEmailAnalysisPrompt(emailContent) {
+function getToneInstruction(responseTone) {
+
+  if (responseTone === "friendly") {
+    return "friendly, approachable, warm, but still business appropriate";
+  }
+
+  if (responseTone === "concise") {
+    return "short, direct, clear, and suitable for busy business users";
+  }
+
+  return "professional, precise, respectful, and business formal";
+}
+
+function getEmailAnalysisPrompt(emailContent, options = {}) {
+
+const responseTone =
+  options.responseTone || "professional";
+
+const toneInstruction =
+  getToneInstruction(responseTone);
 
 return `
 You are a PROFESSIONAL OUTLOOK EMAIL AI.
@@ -81,8 +100,10 @@ Replies must:
 - sound human
 - sound business professional
 - answer sender requests
+- use this reply tone: ${toneInstruction}
 
 9. Generate ONE FOLLOW-UP EMAIL
+- follow-up must use the same reply tone
 
 OUTPUT JSON ONLY:
 

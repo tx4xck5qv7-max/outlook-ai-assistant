@@ -204,6 +204,16 @@ function clearSensitiveConfirmation() {
   pendingSensitiveConfirmation = null;
 }
 
+function getSelectedTone() {
+
+  const toneSelect =
+    document.getElementById("toneSelect");
+
+  return toneSelect && toneSelect.value
+    ? toneSelect.value
+    : "professional";
+}
+
 async function generateAI() {
 
   const summary =
@@ -238,6 +248,9 @@ async function generateAI() {
 
   const button =
     document.getElementById("generateBtn");
+
+  const responseTone =
+    getSelectedTone();
 
   button.disabled = true;
   button.textContent =
@@ -324,11 +337,15 @@ async function generateAI() {
             privacyPreview.privacy
           );
 
+        const confirmedSensitiveAnalysis =
+          sensitivity.requiresReview &&
+          hasSensitiveConfirmation(
+            sensitivitySignature
+          );
+
         if (
           sensitivity.requiresReview &&
-          !hasSensitiveConfirmation(
-            sensitivitySignature
-          )
+          !confirmedSensitiveAnalysis
         ) {
           requireSensitiveConfirmation(
             sensitivitySignature
@@ -356,7 +373,10 @@ async function generateAI() {
           await postJson(
             "/api/email/analyze",
             {
-              emailContent: emailText
+              emailContent: emailText,
+              responseTone,
+              confirmSensitiveAnalysis:
+                confirmedSensitiveAnalysis
             }
           );
 

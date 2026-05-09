@@ -7,6 +7,27 @@ const {
 } = require("../utils/privacy");
 
 const MAX_EMAIL_LENGTH = 200000;
+const RESPONSE_TONES = new Set([
+  "professional",
+  "friendly",
+  "concise"
+]);
+
+function getResponseTone(req) {
+
+  const {
+    responseTone
+  } = req.body;
+
+  if (
+    typeof responseTone === "string" &&
+    RESPONSE_TONES.has(responseTone)
+  ) {
+    return responseTone;
+  }
+
+  return "professional";
+}
 
 function validateEmailContent(req, res) {
 
@@ -74,7 +95,29 @@ exports.analyzeEmail = async (req, res) => {
       return;
     }
 
-    const result = await getAIResponse(emailContent);
+    const privacyResult =
+      sanitizeEmailWithReport(emailContent);
+
+    const sensitivity =
+      privacyResult.report.sensitivity;
+
+    if (
+      sensitivity.requiresReview &&
+      req.body.confirmSensitiveAnalysis !== true
+    ) {
+      return res.status(409).json({
+        error: "Sensible Email erkannt. Bitte Analyse bestaetigen.",
+        requiresConfirmation: true,
+        privacy: privacyResult.report
+      });
+    }
+
+    const result = await getAIResponse(
+      emailContent,
+      {
+        responseTone: getResponseTone(req)
+      }
+    );
 
     // Datenschutz:
     // Keine Speicherung

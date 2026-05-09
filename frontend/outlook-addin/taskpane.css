@@ -54,6 +54,29 @@ h1 {
   padding: 8px 10px;
 }
 
+.optionRow {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.optionRow label {
+  color: #4b5563;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.optionRow select {
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  color: #1f2937;
+  font-size: 13px;
+  padding: 8px 10px;
+}
+
 button {
   border: none;
   border-radius: 10px;

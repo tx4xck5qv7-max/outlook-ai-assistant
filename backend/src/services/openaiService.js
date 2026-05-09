@@ -57,7 +57,7 @@ function getList(value, fallback) {
     .slice(0, 3);
 }
 
-function normalizeAIResponse(data) {
+function normalizeAIResponse(data, metadata) {
   const safeData =
     data && typeof data === "object"
       ? data
@@ -89,11 +89,12 @@ function normalizeAIResponse(data) {
       "Vielen Dank fuer Ihre Nachricht. Ich pruefe den Vorgang und melde mich zeitnah zurueck.",
       "Danke fuer die Informationen. Ich nehme die Punkte auf und gebe Ihnen schnellstmoeglich Rueckmeldung.",
       "Vielen Dank. Ich klaere die offenen Punkte intern und komme anschliessend mit einer konkreten Antwort auf Sie zu."
-    ])
+    ]),
+    metadata
   };
 }
 
-async function getAIResponse(emailContent) {
+async function getAIResponse(emailContent, options = {}) {
 
   // Datenschutz:
   // Nur anonymisierte Daten an KI
@@ -103,8 +104,16 @@ async function getAIResponse(emailContent) {
   const cleanedEmail =
     privacyResult.clean;
 
+  const responseTone =
+    options.responseTone || "professional";
+
   const prompt =
-    getEmailAnalysisPrompt(cleanedEmail);
+    getEmailAnalysisPrompt(
+      cleanedEmail,
+      {
+        responseTone
+      }
+    );
 
   const completion = await client.chat.completions.create(
     {
@@ -140,12 +149,22 @@ async function getAIResponse(emailContent) {
 
   try {
     return {
-      ...normalizeAIResponse(JSON.parse(raw)),
+      ...normalizeAIResponse(
+        JSON.parse(raw),
+        {
+          responseTone
+        }
+      ),
       privacy: privacyResult.report
     };
   } catch (err) {
     return {
-      ...normalizeAIResponse({}),
+      ...normalizeAIResponse(
+        {},
+        {
+          responseTone
+        }
+      ),
       privacy: privacyResult.report
     };
   }
