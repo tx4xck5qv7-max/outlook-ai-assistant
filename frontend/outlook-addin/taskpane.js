@@ -1,81 +1,170 @@
-const BACKEND_URL = "https://cuddly-areas-grin.loca.lt/analyze-email";
+async function generateAI() {
 
-Office.onReady((info) => {
-    if (info.host === Office.HostType.Outlook) {
-        document.getElementById('analyzeBtn').onclick = analyzeEmail;
-    }
-});
+  const summary =
+    document.getElementById("summary");
 
-async function analyzeEmail() {
-    const btn = document.getElementById('analyzeBtn');
-    const loading = document.getElementById('loading');
-    const results = document.getElementById('results');
-    const error = document.getElementById('error');
-    
-    btn.disabled = true;
-    loading.style.display = 'block';
-    results.style.display = 'none';
-    error.style.display = 'none';
-    
-    try {
-        const emailContent = await getEmailContent();
-        
-        if (!emailContent || emailContent.trim().length === 0) {
-            throw new Error('Email body is empty');
-        }
-        
-        const response = await fetch(BACKEND_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ emailContent }),
-        });
-        
-        if (!response.ok) {
-            throw new Error(`Backend error: ${response.status}`);
-        }
-        
+  const suggestions =
+    document.getElementById("suggestions");
+
+  const actions =
+    document.getElementById("actions");
+
+  const todos =
+    document.getElementById("todos");
+
+  const followUp =
+    document.getElementById("followUp");
+
+  const status =
+    document.getElementById("status");
+
+  const priorityBox =
+    document.getElementById("priorityBox");
+
+  const sentimentBox =
+    document.getElementById("sentimentBox");
+
+  const salesBox =
+    document.getElementById("salesBox");
+
+  const button =
+    document.getElementById("generateBtn");
+
+  button.disabled = true;
+
+  summary.innerText =
+    "Email wird analysiert...";
+
+  suggestions.innerHTML = "";
+  actions.innerHTML = "";
+  todos.innerHTML = "";
+  followUp.innerHTML = "";
+
+  status.innerText =
+    "KI analysiert Email...";
+
+  Office.context.mailbox.item.body.getAsync(
+    "text",
+    async function(result) {
+
+      try {
+
+        const emailText = result.value;
+
+        const response = await fetch(
+          "https://localhost:3001/api/email/analyze",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              emailContent: emailText
+            })
+          }
+        );
+
         const data = await response.json();
-        
-        if (!data.summary || !data.suggestions) {
-            throw new Error('Invalid response format');
-        }
-        
-        document.getElementById('summary').textContent = data.summary;
-        const suggestionsList = document.getElementById('suggestions');
-        suggestionsList.innerHTML = '';
-        data.suggestions.forEach(suggestion => {
-            const li = document.createElement('li');
-            li.textContent = suggestion;
-            suggestionsList.appendChild(li);
-        });
-        
-        results.style.display = 'block';
-        
-    } catch (err) {
-        console.error('Error:', err);
-        error.textContent = `Error: ${err.message}`;
-        error.style.display = 'block';
-    } finally {
-        btn.disabled = false;
-        loading.style.display = 'none';
-    }
-}
 
-function getEmailContent() {
-    return new Promise((resolve, reject) => {
-        try {
-            Office.context.mailbox.item.body.getAsync(
-                Office.CoercionType.Text,
-                (result) => {
-                    if (result.status === Office.AsyncResultStatus.Succeeded) {
-                        resolve(result.value);
-                    } else {
-                        reject(new Error('Failed to get email body'));
-                    }
-                }
-            );
-        } catch (err) {
-            reject(err);
-        }
-    });
+        summary.innerText =
+          data.summary;
+
+        priorityBox.innerText =
+          data.priority;
+
+        sentimentBox.innerText =
+          data.sentiment;
+
+        salesBox.innerText =
+          data.salesChance;
+
+        // ACTIONS
+        actions.innerHTML = "";
+
+        data.actions.forEach((action) => {
+
+          const div =
+            document.createElement("div");
+
+          div.className = "listCard";
+
+          div.innerText = action;
+
+          actions.appendChild(div);
+        });
+
+        // TODOS
+        todos.innerHTML = "";
+
+        data.todos.forEach((todo) => {
+
+          const div =
+            document.createElement("div");
+
+          div.className = "todoCard";
+
+          div.innerText = "☑ " + todo;
+
+          todos.appendChild(div);
+        });
+
+        // FOLLOWUP
+        const followBtn =
+          document.createElement("button");
+
+        followBtn.innerText =
+          data.followUp;
+
+        followBtn.onclick = () => {
+
+          navigator.clipboard.writeText(
+            data.followUp
+          );
+
+          status.innerText =
+            "Follow-Up kopiert";
+        };
+
+        followUp.appendChild(followBtn);
+
+        // REPLIES
+        suggestions.innerHTML = "";
+
+        data.suggestions.forEach((reply) => {
+
+          const btn =
+            document.createElement("button");
+
+          btn.className = "replyButton";
+
+          btn.innerText = reply;
+
+          btn.onclick = () => {
+
+            navigator.clipboard.writeText(reply);
+
+            status.innerText =
+              "Antwort kopiert";
+          };
+
+          suggestions.appendChild(btn);
+        });
+
+        status.innerText =
+          "Analyse abgeschlossen";
+
+      } catch (err) {
+
+        console.error(err);
+
+        summary.innerText =
+          "Analyse fehlgeschlagen";
+
+        status.innerText =
+          err.message;
+      }
+
+      button.disabled = false;
+    }
+  );
 }

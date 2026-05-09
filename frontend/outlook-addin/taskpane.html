@@ -1,63 +1,130 @@
 <!DOCTYPE html>
-<html>
+<html lang="de">
+
 <head>
-    <meta charset="UTF-8" />
-    <title>AI Email Assistant</title>
-    <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
-    <script src="taskpane.js"></script>
-    <style>
-        body { 
-            font-family: Arial, sans-serif; 
-            padding: 15px; 
-            margin: 0;
-        }
-        button { 
-            padding: 10px 20px; 
-            background: #0078d4; 
-            color: white; 
-            border: none; 
-            cursor: pointer;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-        button:hover { background: #005a9e; }
-        button:disabled { background: #cccccc; cursor: not-allowed; }
-        .result { 
-            margin-top: 15px; 
-            padding: 10px; 
-            background: #f0f0f0; 
-            border-radius: 4px;
-        }
-        .error { 
-            color: red; 
-            padding: 10px;
-            background: #ffe0e0;
-            border-radius: 4px;
-        }
-        .loading { color: #666; }
-        ol { padding-left: 20px; }
-        li { margin: 5px 0; }
-    </style>
+
+  <meta charset="UTF-8" />
+
+  <title>Outlook AI Assistant</title>
+
+  <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+
+  <link rel="stylesheet" href="taskpane.css" />
+
 </head>
+
 <body>
-    <h3>AI Email Assistant</h3>
-    <button id="analyzeBtn">Analyze Email</button>
-    
-    <div id="loading" style="display: none;" class="loading">
-        <p>Analyzing email...</p>
+
+  <div class="app">
+
+    <div class="topBar">
+
+      <div>
+        <h1>Outlook AI</h1>
+        <p class="subtitle">
+          Smart Email Intelligence
+        </p>
+      </div>
+
+      <button
+        id="generateBtn"
+        onclick="generateAI()">
+
+        Analysieren
+
+      </button>
+
     </div>
-    
-    <div id="results" style="display: none;">
-        <div class="result">
-            <h4>Summary:</h4>
-            <p id="summary"></p>
+
+    <div class="statusGrid">
+
+      <div class="statusCard">
+
+        <div class="label">
+          PRIORITÄT
         </div>
-        <div class="result">
-            <h4>Reply Suggestions:</h4>
-            <ol id="suggestions"></ol>
+
+        <div id="priorityBox" class="value">
+          -
         </div>
+
+      </div>
+
+      <div class="statusCard">
+
+        <div class="label">
+          STIMMUNG
+        </div>
+
+        <div id="sentimentBox" class="value">
+          -
+        </div>
+
+      </div>
+
+      <div class="statusCard">
+
+        <div class="label">
+          SALES
+        </div>
+
+        <div id="salesBox" class="value">
+          -
+        </div>
+
+      </div>
+
     </div>
-    
-    <div id="error" style="display: none;" class="error"></div>
+
+    <div class="card">
+
+      <h2>⚡ Smart Actions</h2>
+
+      <div id="actions"></div>
+
+    </div>
+
+    <div class="card">
+
+      <h2>✅ Aufgaben / Todos</h2>
+
+      <div id="todos"></div>
+
+    </div>
+
+    <div class="card">
+
+      <h2>📄 Zusammenfassung</h2>
+
+      <div id="summary">
+        Noch keine Analyse.
+      </div>
+
+    </div>
+
+    <div class="card">
+
+      <h2>✉️ Antwortvorschläge</h2>
+
+      <div id="suggestions"></div>
+
+    </div>
+
+    <div class="card">
+
+      <h2>📨 Follow-Up</h2>
+
+      <div id="followUp"></div>
+
+    </div>
+
+    <div id="status">
+      Bereit.
+    </div>
+
+  </div>
+
+  <script src="taskpane.js"></script>
+
 </body>
 </html>

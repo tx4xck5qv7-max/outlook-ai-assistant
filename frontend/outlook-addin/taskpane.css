@@ -1,0 +1,120 @@
+body {
+  margin: 0;
+  padding: 0;
+  background: #f3f5f7;
+  font-family: Arial, sans-serif;
+  color: #1f2937;
+}
+
+.app {
+  padding: 14px;
+}
+
+.topBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+h1 {
+  margin: 0;
+  font-size: 24px;
+}
+
+.subtitle {
+  margin: 2px 0 0;
+  color: #6b7280;
+  font-size: 13px;
+}
+
+button {
+  border: none;
+  border-radius: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  background: #0078d4;
+  color: white;
+  transition: 0.2s;
+  font-size: 14px;
+}
+
+button:hover {
+  background: #005fa3;
+}
+
+.statusGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.statusCard {
+  background: white;
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+.label {
+  font-size: 11px;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.value {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.card {
+  background: white;
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 14px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.card h2 {
+  margin-top: 0;
+  font-size: 16px;
+}
+
+#summary {
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+
+.listCard {
+  background: #eef6ff;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.todoCard {
+  background: #f3fff2;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.replyButton {
+  width: 100%;
+  text-align: left;
+  margin-bottom: 8px;
+  background: #f3f4f6;
+  color: black;
+}
+
+.replyButton:hover {
+  background: #e5e7eb;
+}
+
+#status {
+  margin-top: 10px;
+  text-align: center;
+  color: #6b7280;
+  font-size: 12px;
+}

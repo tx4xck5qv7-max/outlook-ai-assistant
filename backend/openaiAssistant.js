@@ -1,67 +1,59 @@
 const OpenAI = require("openai");
 
-const openAiKey = process.env.OPENAI_API_KEY;
-if (!openAiKey) {
-  throw new Error("OPENAI_API_KEY fehlt. Bitte .env-Datei erstellen und den Schlüssel eintragen.");
-}
+const { sanitizeEmail } = require("../utils/privacy");
+const { getEmailAnalysisPrompt } = require("../utils/prompt");
 
-const client = new OpenAI({ apiKey: openAiKey });
+const client = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
 
-function extractText(output) {
-  if (!output) return "";
-  if (typeof output === "string") return output;
-  if (Array.isArray(output)) {
-    return output
-      .map((item) => extractText(item))
-      .filter(Boolean)
-      .join(" ")
-      .trim();
-  }
-  if (output.content) {
-    return extractText(output.content);
-  }
-  if (output.text) {
-    return String(output.text);
-  }
-  return "";
-}
+async function getAIResponse(emailContent) {
 
-async function analyzeEmail(emailContent) {
-  const prompt = `Du bist ein einfacher E-Mail-Assistent.\n\nE-Mail-Inhalt:\n${emailContent}\n\nAufgabe:\n1) Erstelle eine kurze, klare Zusammenfassung der E-Mail.\n2) Erstelle drei verschiedene Antwortvorschläge.\n\nAntworte nur im JSON-Format mit den Feldern: summary, suggestions.\nBeispiel:\n{\n  "summary": "...",\n  "suggestions": ["Antwort 1", "Antwort 2", "Antwort 3"]\n}`;
+  const cleanEmail = sanitizeEmail(emailContent);
 
-  const response = await client.responses.create({
+  const prompt = getEmailAnalysisPrompt(cleanEmail);
+
+  const completion = await client.chat.completions.create({
     model: "gpt-4.1-mini",
-    input: prompt,
-    temperature: 0.6,
-    max_output_tokens: 500,
+    messages: [
+      {
+        role: "system",
+        content:
+          "You are a professional Outlook email AI assistant."
+      },
+      {
+        role: "user",
+        content: prompt
+      }
+    ],
+    temperature: 0.4
   });
 
-  const text = extractText(response.output);
-  let parsed;
+  let text = completion.choices[0].message.content;
+
+  text = text.replace(/```json/g, "");
+  text = text.replace(/```/g, "");
+  text = text.trim();
 
   try {
-    parsed = JSON.parse(text);
+
+    return JSON.parse(text);
+
   } catch (err) {
-    const fallback = text
-      .replace(/\n/g, " ")
-      .replace(/\s+/g, " ")
-      .trim();
+
+    console.error("JSON ERROR:");
+    console.error(text);
+
     return {
-      summary: fallback,
+      summary:
+        "Fehler bei der Email-Analyse.",
       suggestions: [
-        "Antwortvorschlag 1: Bitte fügen Sie mehr Kontext hinzu.",
-        "Antwortvorschlag 2: Bitte fügen Sie mehr Kontext hinzu.",
-        "Antwortvorschlag 3: Bitte fügen Sie mehr Kontext hinzu.",
-      ],
-      raw: text,
+        "Antwort konnte nicht generiert werden.",
+        "Antwort konnte nicht generiert werden.",
+        "Antwort konnte nicht generiert werden."
+      ]
     };
   }
-
-  return {
-    summary: parsed.summary || "",
-    suggestions: Array.isArray(parsed.suggestions) ? parsed.suggestions.slice(0, 3) : [],
-    raw: text,
-  };
 }
 
-module.exports = { analyzeEmail };
+module.exports = { getAIResponse };
