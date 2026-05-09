@@ -8,6 +8,13 @@ const SENSITIVE_CONFIRMATION_MS =
 
 let pendingSensitiveConfirmation = null;
 
+const VALUE_STATE_CLASSES = [
+  "valueStateHigh",
+  "valueStateMedium",
+  "valueStateGood",
+  "valueStateNeutral"
+];
+
 function addTextCard(container, className, text) {
 
   const div =
@@ -43,6 +50,121 @@ function renderList(container, items, className, fallback, prefix) {
       `${prefix || ""}${item}`
     );
   });
+}
+
+function normalizeMetricValue(value) {
+
+  return String(value || "")
+    .trim()
+    .toUpperCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function clearValueState(element) {
+
+  if (!element || !element.classList) {
+    return;
+  }
+
+  element.classList.remove(...VALUE_STATE_CLASSES);
+}
+
+function setValueState(element, state) {
+
+  clearValueState(element);
+
+  if (state) {
+    element.classList.add(state);
+  }
+}
+
+function applyMetricState(element, value, metric) {
+
+  const normalized =
+    normalizeMetricValue(value);
+
+  if (!normalized || normalized === "-") {
+    setValueState(element, "valueStateNeutral");
+    return;
+  }
+
+  if (metric === "confidence") {
+    if (normalized === "HIGH") {
+      setValueState(element, "valueStateGood");
+      return;
+    }
+
+    if (normalized === "LOW") {
+      setValueState(element, "valueStateHigh");
+      return;
+    }
+
+    setValueState(element, "valueStateMedium");
+    return;
+  }
+
+  if (metric === "sales") {
+    if (normalized === "HIGH") {
+      setValueState(element, "valueStateGood");
+      return;
+    }
+
+    if (normalized === "MEDIUM") {
+      setValueState(element, "valueStateMedium");
+      return;
+    }
+
+    setValueState(element, "valueStateNeutral");
+    return;
+  }
+
+  if (metric === "sentiment") {
+    if (normalized === "POSITIV") {
+      setValueState(element, "valueStateGood");
+      return;
+    }
+
+    if (
+      normalized === "NEGATIV" ||
+      normalized === "VERARGERT" ||
+      normalized === "VERAERGERT" ||
+      normalized === "DRINGEND"
+    ) {
+      setValueState(element, "valueStateHigh");
+      return;
+    }
+
+    setValueState(element, "valueStateNeutral");
+    return;
+  }
+
+  if (metric === "deadline") {
+    if (normalized === "KEINE FRIST ERKANNT") {
+      setValueState(element, "valueStateNeutral");
+      return;
+    }
+
+    setValueState(element, "valueStateMedium");
+    return;
+  }
+
+  if (normalized === "HIGH") {
+    setValueState(element, "valueStateHigh");
+    return;
+  }
+
+  if (normalized === "MEDIUM") {
+    setValueState(element, "valueStateMedium");
+    return;
+  }
+
+  if (normalized === "LOW") {
+    setValueState(element, "valueStateGood");
+    return;
+  }
+
+  setValueState(element, "valueStateNeutral");
 }
 
 function formatBriefList(title, items) {
@@ -388,6 +510,239 @@ function buildQuickOverview(data, privacy) {
         ? "erforderlich"
         : "Standardprozess"
     }`
+  ].join("\n");
+}
+
+function buildSendReadinessCheck(data, privacy) {
+
+  const safeData =
+    data && typeof data === "object"
+      ? data
+      : {};
+
+  const safePrivacy =
+    privacy && typeof privacy === "object"
+      ? privacy
+      : {};
+
+  const sensitivity =
+    safePrivacy.sensitivity &&
+    typeof safePrivacy.sensitivity === "object"
+      ? safePrivacy.sensitivity
+      : {
+        level: "LOW",
+        categories: [],
+        requiresReview: false
+      };
+
+  const riskLevel =
+    String(safeData.riskLevel || "LOW")
+      .toUpperCase();
+
+  const confidenceLevel =
+    String(safeData.confidenceLevel || "MEDIUM")
+      .toUpperCase();
+
+  const calendarRisk =
+    String(safeData.calendarConflictRisk || "UNKNOWN")
+      .toUpperCase();
+
+  const calendarRelevance =
+    String(safeData.calendarRelevance || "NO")
+      .toUpperCase();
+
+  const checks = [];
+
+  if (sensitivity.requiresReview) {
+    checks.push(
+      "Sensible Inhalte erkannt: Antwort fachlich freigeben lassen."
+    );
+  }
+
+  if (riskLevel === "HIGH") {
+    checks.push(
+      "Hohes Risiko: Antwort nicht ohne interne Rueckversicherung senden."
+    );
+  }
+
+  if (
+    calendarRelevance === "YES" ||
+    calendarRelevance === "POSSIBLE" ||
+    calendarRisk === "HIGH" ||
+    calendarRisk === "MEDIUM"
+  ) {
+    checks.push(
+      "Terminbezug: Verfuegbarkeit vor Zusage im Kalender pruefen."
+    );
+  }
+
+  if (confidenceLevel === "LOW") {
+    checks.push(
+      "Niedrige KI-Sicherheit: Antwort gegen Originalmail pruefen."
+    );
+  }
+
+  checks.push(
+    "Vor Versand Ton, Fakten und Empfaengerkreis kontrollieren."
+  );
+
+  const needsReview =
+    sensitivity.requiresReview ||
+    riskLevel === "HIGH" ||
+    confidenceLevel === "LOW" ||
+    calendarRisk === "HIGH";
+
+  return [
+    `Status: ${
+      needsReview
+        ? "Pruefung vor Versand empfohlen"
+        : "Standardpruefung ausreichend"
+    }`,
+    `Automatisch senden: nein`,
+    "",
+    formatBriefList("Checkliste", checks)
+  ].join("\n");
+}
+
+function buildClarificationNeeds(data, privacy) {
+
+  const safeData =
+    data && typeof data === "object"
+      ? data
+      : {};
+
+  const safePrivacy =
+    privacy && typeof privacy === "object"
+      ? privacy
+      : {};
+
+  const sensitivity =
+    safePrivacy.sensitivity &&
+    typeof safePrivacy.sensitivity === "object"
+      ? safePrivacy.sensitivity
+      : {
+        categories: [],
+        requiresReview: false
+      };
+
+  const confidenceLevel =
+    String(safeData.confidenceLevel || "MEDIUM")
+      .toUpperCase();
+
+  const riskLevel =
+    String(safeData.riskLevel || "LOW")
+      .toUpperCase();
+
+  const calendarRelevance =
+    String(safeData.calendarRelevance || "NO")
+      .toUpperCase();
+
+  const calendarRisk =
+    String(safeData.calendarConflictRisk || "UNKNOWN")
+      .toUpperCase();
+
+  const deadline =
+    String(safeData.deadline || "")
+      .trim();
+
+  const owner =
+    String(safeData.recommendedOwner || "")
+      .trim();
+
+  const calendarWindow =
+    String(safeData.calendarWindow || "")
+      .trim();
+
+  const categories =
+    Array.isArray(sensitivity.categories)
+      ? sensitivity.categories
+      : [];
+
+  const needs = [];
+
+  if (
+    !owner ||
+    owner === "Allgemein" ||
+    owner === "Unklar"
+  ) {
+    needs.push(
+      "Zustaendigkeit klaeren, bevor Aufgaben intern verteilt werden."
+    );
+  }
+
+  if (
+    !deadline ||
+    deadline === "Keine Frist erkannt"
+  ) {
+    needs.push(
+      "Frist unklar: falls zeitkritisch, konkrete Deadline bestaetigen."
+    );
+  }
+
+  if (
+    (
+      calendarRelevance === "YES" ||
+      calendarRelevance === "POSSIBLE"
+    ) &&
+    (
+      !calendarWindow ||
+      calendarWindow === "Kein Terminbezug erkannt"
+    )
+  ) {
+    needs.push(
+      "Terminbezug erkannt, aber Zeitfenster unklar: Datum oder Uhrzeit bestaetigen."
+    );
+  }
+
+  if (
+    calendarRisk === "HIGH" ||
+    calendarRisk === "MEDIUM"
+  ) {
+    needs.push(
+      "Moeglichen Kalenderkonflikt vor Zusage pruefen."
+    );
+  }
+
+  if (confidenceLevel === "LOW") {
+    needs.push(
+      "KI-Sicherheit niedrig: Originalmail vor Antwort genau gegenpruefen."
+    );
+  }
+
+  if (riskLevel === "HIGH") {
+    needs.push(
+      "Hohes Risiko: Fachbereich oder Verantwortliche einbeziehen."
+    );
+  }
+
+  if (sensitivity.requiresReview) {
+    needs.push(
+      "Sensible Inhalte: Zweck, Freigabe und Empfaengerkreis pruefen."
+    );
+  }
+
+  return [
+    `Status: ${
+      needs.length
+        ? `${needs.length} Punkt(e) klaeren`
+        : "Kein kritischer Klaerungsbedarf erkannt"
+    }`,
+    `Sensible Kategorien: ${
+      categories.length
+        ? categories.join(", ")
+        : "keine"
+    }`,
+    "",
+    formatBriefList(
+      "Offene Punkte",
+      needs.length
+        ? needs
+        : [
+          "Keine besonderen Luecken erkannt.",
+          "Antwort trotzdem kurz gegen Originalmail pruefen.",
+          "Bei Unsicherheit fachlich rueckfragen."
+        ]
+    )
   ].join("\n");
 }
 
@@ -791,6 +1146,9 @@ async function generateAI() {
   const quickOverviewBox =
     document.getElementById("quickOverviewBox");
 
+  const clarificationBox =
+    document.getElementById("clarificationBox");
+
   const suggestions =
     document.getElementById("suggestions");
 
@@ -838,6 +1196,9 @@ async function generateAI() {
 
   const approvalCheckCopyBtn =
     document.getElementById("approvalCheckCopyBtn");
+
+  const sendReadinessBox =
+    document.getElementById("sendReadinessBox");
 
   const followUp =
     document.getElementById("followUp");
@@ -914,6 +1275,9 @@ async function generateAI() {
   quickOverviewBox.textContent =
     "Empfehlung wird vorbereitet...";
 
+  clarificationBox.textContent =
+    "Klaerungsbedarf wird geprueft...";
+
   suggestions.innerHTML = "";
   actions.innerHTML = "";
   todos.innerHTML = "";
@@ -933,10 +1297,25 @@ async function generateAI() {
     "Freigabe-Check wird vorbereitet...";
   approvalCheckCopyBtn.disabled = true;
   approvalCheckCopyBtn.onclick = null;
+  sendReadinessBox.textContent =
+    "Versand-Check wird vorbereitet...";
   privacyReportBox.textContent =
     "Datenschutzbericht wird vorbereitet...";
   privacyReportCopyBtn.disabled = true;
   privacyReportCopyBtn.onclick = null;
+
+  [
+    typeBox,
+    ownerBox,
+    deadlineBox,
+    urgencyBox,
+    priorityBox,
+    sentimentBox,
+    salesBox,
+    confidenceBox,
+    calendarRiskBox,
+    riskLevelBox
+  ].forEach(clearValueState);
 
   status.textContent =
     "Denke nach...";
@@ -968,6 +1347,9 @@ async function generateAI() {
     quickOverviewBox.textContent =
       "Outlook-Kontext nicht verfuegbar.";
 
+    clarificationBox.textContent =
+      "Klaerungsbedarf nur im Outlook-Kontext moeglich.";
+
     status.textContent =
       "Bitte im Outlook Add-in starten.";
 
@@ -982,6 +1364,9 @@ async function generateAI() {
 
     approvalCheckBox.textContent =
       "Freigabe-Check nur im Outlook-Kontext moeglich.";
+
+    sendReadinessBox.textContent =
+      "Versand-Check nur im Outlook-Kontext moeglich.";
 
     privacyReportBox.textContent =
       "Datenschutzbericht nur im Outlook-Kontext moeglich.";
@@ -1093,6 +1478,9 @@ async function generateAI() {
           quickOverviewBox.textContent =
             "Empfehlung erst nach bestaetigter Analyse verfuegbar.";
 
+          clarificationBox.textContent =
+            "Klaerungsbedarf erst nach bestaetigter Analyse verfuegbar.";
+
           status.textContent =
             "Analyse pausiert bis zur Bestaetigung.";
 
@@ -1111,6 +1499,9 @@ async function generateAI() {
             "Freigabe-Check erst nach bestaetigter Analyse verfuegbar.";
 
           approvalCheckCopyBtn.disabled = true;
+
+          sendReadinessBox.textContent =
+            "Versand-Check erst nach bestaetigter Analyse verfuegbar.";
 
           setAnalysisProgress(false);
 
@@ -1151,6 +1542,12 @@ async function generateAI() {
             privacyPreview.privacy
           );
 
+        clarificationBox.textContent =
+          buildClarificationNeeds(
+            data,
+            privacyPreview.privacy
+          );
+
         typeBox.textContent =
           data.emailType || "-";
 
@@ -1159,12 +1556,22 @@ async function generateAI() {
 
         deadlineBox.textContent =
           data.deadline || "-";
+        applyMetricState(
+          deadlineBox,
+          data.deadline,
+          "deadline"
+        );
 
         urgencyBox.textContent =
           data.urgencyReason || "-";
 
         calendarRiskBox.textContent =
           data.calendarConflictRisk || "-";
+        applyMetricState(
+          calendarRiskBox,
+          data.calendarConflictRisk,
+          "risk"
+        );
 
         calendarAccessBox.textContent =
           getCalendarAccessMessage(
@@ -1189,18 +1596,43 @@ async function generateAI() {
 
         priorityBox.textContent =
           data.priority || "-";
+        applyMetricState(
+          priorityBox,
+          data.priority,
+          "priority"
+        );
 
         sentimentBox.textContent =
           data.sentiment || "-";
+        applyMetricState(
+          sentimentBox,
+          data.sentiment,
+          "sentiment"
+        );
 
         salesBox.textContent =
           data.salesChance || "-";
+        applyMetricState(
+          salesBox,
+          data.salesChance,
+          "sales"
+        );
 
         confidenceBox.textContent =
           data.confidenceLevel || "-";
+        applyMetricState(
+          confidenceBox,
+          data.confidenceLevel,
+          "confidence"
+        );
 
         riskLevelBox.textContent =
           data.riskLevel || "-";
+        applyMetricState(
+          riskLevelBox,
+          data.riskLevel,
+          "risk"
+        );
 
         escalationBox.textContent =
           data.escalationRecommendation ||
@@ -1276,6 +1708,12 @@ async function generateAI() {
             "Freigabe-Check kopiert"
           );
         };
+
+        sendReadinessBox.textContent =
+          buildSendReadinessCheck(
+            data,
+            privacyPreview.privacy
+          );
 
         // ACTIONS
         renderList(
@@ -1399,6 +1837,9 @@ async function generateAI() {
         quickOverviewBox.textContent =
           "Empfehlung nicht erstellt.";
 
+        clarificationBox.textContent =
+          "Klaerungsbedarf nicht erstellt.";
+
         if (!privacyChecked) {
           privacyStatus.textContent =
             "Datenschutzprüfung nicht abgeschlossen.";
@@ -1419,6 +1860,9 @@ async function generateAI() {
           "Freigabe-Check nicht erstellt.";
 
         approvalCheckCopyBtn.disabled = true;
+
+        sendReadinessBox.textContent =
+          "Versand-Check nicht erstellt.";
 
         if (!privacyChecked) {
           privacyReportBox.textContent =
