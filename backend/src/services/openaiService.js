@@ -64,6 +64,11 @@ function normalizeAIResponse(data, metadata) {
       : {};
 
   return {
+    emailType: getString(safeData.emailType, "Unklar"),
+    recommendedOwner: getString(
+      safeData.recommendedOwner,
+      "Allgemein"
+    ),
     priority: getString(safeData.priority, "MEDIUM"),
     sentiment: getString(safeData.sentiment, "NEUTRAL"),
     salesChance: getString(safeData.salesChance, "LOW"),

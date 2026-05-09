@@ -92,6 +92,8 @@ Examples:
 - Angebot
 - Lieferung
 
+Return the detected type in the JSON field "emailType".
+
 2. Detect PRIORITY
 - HIGH
 - MEDIUM
@@ -154,9 +156,24 @@ Replies must:
 - follow-up must use the same reply tone
 - follow-up must follow the same language rule
 
+10. Recommend RESPONSIBLE OWNER
+
+Choose the best routing owner:
+- Vertrieb
+- Support
+- Management
+- Buchhaltung
+- HR
+- Recht
+- Allgemein
+
+Return it in the JSON field "recommendedOwner".
+
 OUTPUT JSON ONLY:
 
 {
+  "emailType": "Sales Anfrage",
+  "recommendedOwner": "Vertrieb",
   "priority": "HIGH",
   "sentiment": "POSITIV",
   "salesChance": "HIGH",

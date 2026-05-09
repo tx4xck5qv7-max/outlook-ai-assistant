@@ -260,6 +260,12 @@ async function generateAI() {
   const priorityBox =
     document.getElementById("priorityBox");
 
+  const typeBox =
+    document.getElementById("typeBox");
+
+  const ownerBox =
+    document.getElementById("ownerBox");
+
   const sentimentBox =
     document.getElementById("sentimentBox");
 
@@ -411,6 +417,12 @@ async function generateAI() {
         summary.textContent =
           data.summary ||
           "Keine belastbare Zusammenfassung erhalten.";
+
+        typeBox.textContent =
+          data.emailType || "-";
+
+        ownerBox.textContent =
+          data.recommendedOwner || "-";
 
         priorityBox.textContent =
           data.priority || "-";
