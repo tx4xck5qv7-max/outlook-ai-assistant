@@ -82,6 +82,15 @@ function buildHandoffBrief(data) {
     `Sicherheit: ${safeData.confidenceLevel || "-"}`,
     `Frist: ${safeData.deadline || "Keine Frist erkannt"}`,
     `Dringlichkeit: ${safeData.urgencyReason || "-"}`,
+    `Kalender: ${safeData.calendarConflictRisk || "-"}`,
+    `Zeitfenster: ${
+      safeData.calendarWindow ||
+      "Kein Terminbezug erkannt"
+    }`,
+    `Kalenderempfehlung: ${
+      safeData.calendarRecommendation ||
+      "Kein Kalenderabgleich erforderlich."
+    }`,
     `Eskalation: ${
       safeData.escalationRecommendation ||
       "Keine Eskalation empfohlen."
@@ -100,8 +109,55 @@ function buildHandoffBrief(data) {
     "",
     formatBriefList("Risiko-Hinweise", safeData.riskFlags),
     "",
-    formatBriefList("Evidenz", safeData.evidenceSnippets)
+    formatBriefList("Evidenz", safeData.evidenceSnippets),
+    "",
+    formatBriefList("Kalendersignale", safeData.calendarSignals)
   ].join("\n");
+}
+
+function setAnalysisProgress(isActive, message) {
+
+  const progress =
+    document.getElementById("analysisProgress");
+
+  if (!progress) {
+    return;
+  }
+
+  if (message) {
+    const dot =
+      progress.querySelector &&
+      progress.querySelector(".thinkingDot");
+
+    progress.textContent = "";
+
+    if (dot) {
+      progress.appendChild(dot);
+    }
+
+    progress.appendChild(
+      document.createTextNode(message)
+    );
+  }
+
+  if (isActive) {
+    progress.classList.remove("isHidden");
+    return;
+  }
+
+  progress.classList.add("isHidden");
+}
+
+function getCalendarAccessMessage(calendarRelevance) {
+
+  if (
+    calendarRelevance === "YES" ||
+    calendarRelevance === "POSSIBLE"
+  ) {
+    return "Kalenderzugriff: noch nicht verbunden. Es wurden keine echten Termine gelesen.";
+  }
+
+  return "Kalenderzugriff: Vorpruefung ohne Kalenderdaten.";
 }
 
 function escapeHtml(value) {
@@ -401,6 +457,9 @@ async function generateAI() {
   const todos =
     document.getElementById("todos");
 
+  const calendarSignals =
+    document.getElementById("calendarSignals");
+
   const riskFlags =
     document.getElementById("riskFlags");
 
@@ -449,6 +508,18 @@ async function generateAI() {
   const urgencyBox =
     document.getElementById("urgencyBox");
 
+  const calendarRiskBox =
+    document.getElementById("calendarRiskBox");
+
+  const calendarAccessBox =
+    document.getElementById("calendarAccessBox");
+
+  const calendarWindowBox =
+    document.getElementById("calendarWindowBox");
+
+  const calendarRecommendationBox =
+    document.getElementById("calendarRecommendationBox");
+
   const sentimentBox =
     document.getElementById("sentimentBox");
 
@@ -469,14 +540,20 @@ async function generateAI() {
 
   button.disabled = true;
   button.textContent =
-    "Analysieren";
+    "Denke nach...";
+
+  setAnalysisProgress(
+    true,
+    "Denke nach... Email wird lokal geprueft und anonymisiert."
+  );
 
   summary.textContent =
-    "Email wird analysiert...";
+    "Denke nach... Email wird analysiert.";
 
   suggestions.innerHTML = "";
   actions.innerHTML = "";
   todos.innerHTML = "";
+  calendarSignals.innerHTML = "";
   riskFlags.innerHTML = "";
   evidenceSnippets.innerHTML = "";
   followUp.innerHTML = "";
@@ -486,7 +563,19 @@ async function generateAI() {
   handoffCopyBtn.onclick = null;
 
   status.textContent =
-    "KI analysiert Email...";
+    "Denke nach...";
+
+  calendarRiskBox.textContent =
+    "-";
+
+  calendarAccessBox.textContent =
+    "Kalenderzugriff: Vorpruefung ohne Kalenderdaten.";
+
+  calendarWindowBox.textContent =
+    "Kalendercheck laeuft...";
+
+  calendarRecommendationBox.textContent =
+    "Kalendercheck laeuft...";
 
   privacyStatus.textContent =
     "Datenschutzprüfung läuft lokal...";
@@ -512,6 +601,14 @@ async function generateAI() {
     decisionRationale.textContent =
       "Outlook-Kontext nicht verfuegbar.";
 
+    calendarWindowBox.textContent =
+      "Outlook-Kontext nicht verfuegbar.";
+
+    calendarRecommendationBox.textContent =
+      "Kalendercheck nur im Outlook-Kontext moeglich.";
+
+    setAnalysisProgress(false);
+
     button.disabled = false;
     return;
   }
@@ -535,6 +632,11 @@ async function generateAI() {
 
         const emailText =
           result.value || "";
+
+        setAnalysisProgress(
+          true,
+          "Denke nach... Datenschutz und Kalenderhinweise werden geprueft."
+        );
 
         const privacyPreview =
           await postJson(
@@ -587,6 +689,11 @@ async function generateAI() {
           button.textContent =
             "Trotzdem analysieren";
 
+          calendarRecommendationBox.textContent =
+            "Kalendercheck pausiert bis zur bewussten Bestaetigung.";
+
+          setAnalysisProgress(false);
+
           button.disabled = false;
           return;
         }
@@ -595,6 +702,11 @@ async function generateAI() {
 
         status.textContent =
           "KI analysiert anonymisierte Email...";
+
+        setAnalysisProgress(
+          true,
+          "Denke nach... KI analysiert Email und Kalenderhinweise."
+        );
 
         const data =
           await postJson(
@@ -624,6 +736,30 @@ async function generateAI() {
 
         urgencyBox.textContent =
           data.urgencyReason || "-";
+
+        calendarRiskBox.textContent =
+          data.calendarConflictRisk || "-";
+
+        calendarAccessBox.textContent =
+          getCalendarAccessMessage(
+            data.calendarRelevance
+          );
+
+        calendarWindowBox.textContent =
+          data.calendarWindow ||
+          "Kein Terminbezug erkannt";
+
+        calendarRecommendationBox.textContent =
+          data.calendarRecommendation ||
+          "Kein Kalenderabgleich erforderlich.";
+
+        renderList(
+          calendarSignals,
+          data.calendarSignals,
+          "calendarSignalCard",
+          "Kein konkreter Terminbezug erkannt.",
+          ""
+        );
 
         priorityBox.textContent =
           data.priority || "-";
@@ -789,6 +925,8 @@ async function generateAI() {
         status.textContent =
           "Analyse abgeschlossen";
 
+        setAnalysisProgress(false);
+
       } catch (err) {
 
         console.error(err);
@@ -809,6 +947,11 @@ async function generateAI() {
 
         decisionRationale.textContent =
           "Begruendung nicht erstellt.";
+
+        calendarRecommendationBox.textContent =
+          "Kalendercheck nicht abgeschlossen.";
+
+        setAnalysisProgress(false);
 
         handoffCopyBtn.disabled = true;
       }

@@ -122,7 +122,23 @@ Rules:
 Return the deadline in "deadline".
 Return the reason in "urgencyReason".
 
-6. Detect BUSINESS RISK AND ESCALATION
+6. Detect CALENDAR RELEVANCE
+
+Important:
+- You do not have access to the user's real calendar.
+- Do not claim that a real calendar conflict was checked.
+- Analyze only the email text for meeting requests, proposed times, deadlines, rescheduling, availability questions, or possible conflicts.
+
+Rules:
+- classify calendar relevance in "calendarRelevance" as YES, NO, or POSSIBLE
+- extract the proposed date, time, or timeframe in "calendarWindow"
+- if no calendar window is visible, return "Kein Terminbezug erkannt"
+- classify possible conflict risk in "calendarConflictRisk" as HIGH, MEDIUM, LOW, or UNKNOWN based only on email text
+- return one concise recommendation in "calendarRecommendation"
+- return EXACTLY 3 short calendar signals in "calendarSignals"
+- do not invent dates, times, or conflicts
+
+7. Detect BUSINESS RISK AND ESCALATION
 
 Rules:
 - classify the business risk as HIGH, MEDIUM, or LOW in "riskLevel"
@@ -132,7 +148,7 @@ Rules:
 - return one concise escalation recommendation in "escalationRecommendation"
 - do not invent risks that are not supported by the email
 
-7. Explain CONFIDENCE AND EVIDENCE
+8. Explain CONFIDENCE AND EVIDENCE
 
 Rules:
 - classify confidence in "confidenceLevel" as HIGH, MEDIUM, or LOW
@@ -143,10 +159,10 @@ Rules:
 - do not include personal data beyond anonymized placeholders
 - do not invent evidence
 
-8. Generate EXACTLY 3 SMART ACTIONS
+9. Generate EXACTLY 3 SMART ACTIONS
 - actions must reflect the analysis focus
 
-9. Extract TODO TASKS
+10. Extract TODO TASKS
 
 Examples:
 - Angebot senden
@@ -157,7 +173,7 @@ Examples:
 Return EXACTLY 3 TODO items.
 - todos must reflect the analysis focus
 
-10. Generate PROFESSIONAL SUMMARY
+11. Generate PROFESSIONAL SUMMARY
 
 RULES:
 - concise
@@ -174,10 +190,11 @@ Summary must include:
 - important information
 - open questions
 - explicit deadline or note that none is visible
+- calendar relevance and possible scheduling concern
 - business risk and escalation note
 - confidence and evidence note
 
-11. Generate EXACTLY 3 PROFESSIONAL EMAIL REPLIES
+12. Generate EXACTLY 3 PROFESSIONAL EMAIL REPLIES
 
 Replies must:
 - fit email context
@@ -187,11 +204,11 @@ Replies must:
 - use this reply tone: ${toneInstruction}
 - language rule: ${languageInstruction}
 
-12. Generate ONE FOLLOW-UP EMAIL
+13. Generate ONE FOLLOW-UP EMAIL
 - follow-up must use the same reply tone
 - follow-up must follow the same language rule
 
-13. Recommend RESPONSIBLE OWNER
+14. Recommend RESPONSIBLE OWNER
 
 Choose the best routing owner:
 - Vertrieb
@@ -211,6 +228,10 @@ OUTPUT JSON ONLY:
   "recommendedOwner": "Vertrieb",
   "deadline": "Keine Frist erkannt",
   "urgencyReason": "Keine besondere Dringlichkeit erkannt.",
+  "calendarRelevance": "NO",
+  "calendarWindow": "Kein Terminbezug erkannt",
+  "calendarConflictRisk": "UNKNOWN",
+  "calendarRecommendation": "Kein Kalenderabgleich erforderlich.",
   "riskLevel": "LOW",
   "escalationRecommendation": "Keine Eskalation empfohlen.",
   "confidenceLevel": "MEDIUM",
@@ -227,6 +248,11 @@ OUTPUT JSON ONLY:
     "Evidenz 1",
     "Evidenz 2",
     "Evidenz 3"
+  ],
+  "calendarSignals": [
+    "Kalendersignal 1",
+    "Kalendersignal 2",
+    "Kalendersignal 3"
   ],
   "actions": [
     "Aktion 1",

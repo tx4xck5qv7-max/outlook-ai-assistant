@@ -44,6 +44,16 @@
       Datenschutzprüfung bereit.
     </div>
 
+    <div
+      id="analysisProgress"
+      class="analysisProgress isHidden"
+      aria-live="polite">
+
+      <span class="thinkingDot"></span>
+      Denke nach... Email wird lokal geprueft und anonymisiert.
+
+    </div>
+
     <div class="optionRow">
       <label for="toneSelect">
         Antwortstil
@@ -198,6 +208,46 @@
         </div>
 
       </div>
+
+      <div class="statusCard">
+
+        <div class="label">
+          KALENDER
+        </div>
+
+        <div id="calendarRiskBox" class="value">
+          -
+        </div>
+
+      </div>
+
+    </div>
+
+    <div class="card">
+
+      <h2>Kalendercheck</h2>
+
+      <div id="calendarAccessBox" class="calendarAccessBox">
+        Kalenderzugriff: Vorpruefung ohne Kalenderdaten.
+      </div>
+
+      <div class="calendarMeta">
+
+        <span class="label">
+          ZEITFENSTER
+        </span>
+
+        <strong id="calendarWindowBox">
+          Kein Terminbezug erkannt
+        </strong>
+
+      </div>
+
+      <div id="calendarRecommendationBox" class="calendarBox">
+        Noch kein Kalendercheck.
+      </div>
+
+      <div id="calendarSignals"></div>
 
     </div>
 

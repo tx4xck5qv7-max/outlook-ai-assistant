@@ -54,6 +54,50 @@ h1 {
   padding: 8px 10px;
 }
 
+.analysisProgress {
+  align-items: center;
+  background: #eef6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  color: #1e3a8a;
+  display: flex;
+  font-size: 12px;
+  gap: 8px;
+  line-height: 1.4;
+  margin: -4px 0 14px;
+  padding: 9px 10px;
+}
+
+.analysisProgress.isHidden {
+  display: none;
+}
+
+.thinkingDot {
+  animation: thinkingPulse 1s ease-in-out infinite;
+  background: #0078d4;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  height: 8px;
+  width: 8px;
+}
+
+@keyframes thinkingPulse {
+  0% {
+    opacity: 0.35;
+    transform: scale(0.85);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+
+  100% {
+    opacity: 0.35;
+    transform: scale(0.85);
+  }
+}
+
 .optionRow {
   align-items: center;
   display: flex;
@@ -177,6 +221,52 @@ button:hover {
   background: #fef2f2;
   border-radius: 8px;
   color: #7f1d1d;
+  margin-bottom: 8px;
+  overflow-wrap: anywhere;
+  padding: 10px;
+}
+
+.calendarAccessBox {
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  color: #4b5563;
+  font-size: 12px;
+  line-height: 1.4;
+  margin-bottom: 8px;
+  overflow-wrap: anywhere;
+  padding: 8px 10px;
+}
+
+.calendarMeta {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.calendarMeta strong {
+  color: #1f2937;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+.calendarBox {
+  background: #eef6f3;
+  border-radius: 8px;
+  color: #275548;
+  line-height: 1.4;
+  margin-bottom: 8px;
+  overflow-wrap: anywhere;
+  padding: 10px;
+}
+
+.calendarSignalCard {
+  background: #f8fafc;
+  border-radius: 8px;
+  color: #374151;
   margin-bottom: 8px;
   overflow-wrap: anywhere;
   padding: 10px;

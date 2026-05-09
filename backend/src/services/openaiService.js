@@ -77,6 +77,22 @@ function normalizeAIResponse(data, metadata) {
       safeData.urgencyReason,
       "Keine besondere Dringlichkeit erkannt."
     ),
+    calendarRelevance: getString(
+      safeData.calendarRelevance,
+      "NO"
+    ),
+    calendarWindow: getString(
+      safeData.calendarWindow,
+      "Kein Terminbezug erkannt"
+    ),
+    calendarConflictRisk: getString(
+      safeData.calendarConflictRisk,
+      "UNKNOWN"
+    ),
+    calendarRecommendation: getString(
+      safeData.calendarRecommendation,
+      "Kein Kalenderabgleich erforderlich."
+    ),
     riskLevel: getString(safeData.riskLevel, "LOW"),
     escalationRecommendation: getString(
       safeData.escalationRecommendation,
@@ -102,6 +118,11 @@ function normalizeAIResponse(data, metadata) {
       "Keine eindeutigen Evidenzstellen erkannt.",
       "Analyse basiert auf dem anonymisierten Email-Kontext.",
       "Keine zusaetzlichen Belege vorhanden."
+    ]),
+    calendarSignals: getList(safeData.calendarSignals, [
+      "Kein konkreter Terminbezug erkannt.",
+      "Keine Uhrzeit erkannt.",
+      "Keine Kalenderaktion erforderlich."
     ]),
     actions: getList(safeData.actions, [
       "Email pruefen",
