@@ -69,6 +69,14 @@ function normalizeAIResponse(data, metadata) {
       safeData.recommendedOwner,
       "Allgemein"
     ),
+    deadline: getString(
+      safeData.deadline,
+      "Keine Frist erkannt"
+    ),
+    urgencyReason: getString(
+      safeData.urgencyReason,
+      "Keine besondere Dringlichkeit erkannt."
+    ),
     priority: getString(safeData.priority, "MEDIUM"),
     sentiment: getString(safeData.sentiment, "NEUTRAL"),
     salesChance: getString(safeData.salesChance, "LOW"),

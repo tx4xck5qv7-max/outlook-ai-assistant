@@ -266,6 +266,12 @@ async function generateAI() {
   const ownerBox =
     document.getElementById("ownerBox");
 
+  const deadlineBox =
+    document.getElementById("deadlineBox");
+
+  const urgencyBox =
+    document.getElementById("urgencyBox");
+
   const sentimentBox =
     document.getElementById("sentimentBox");
 
@@ -423,6 +429,12 @@ async function generateAI() {
 
         ownerBox.textContent =
           data.recommendedOwner || "-";
+
+        deadlineBox.textContent =
+          data.deadline || "-";
+
+        urgencyBox.textContent =
+          data.urgencyReason || "-";
 
         priorityBox.textContent =
           data.priority || "-";

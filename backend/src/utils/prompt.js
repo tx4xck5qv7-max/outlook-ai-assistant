@@ -111,10 +111,21 @@ Return the detected type in the JSON field "emailType".
 - MEDIUM
 - LOW
 
-5. Generate EXACTLY 3 SMART ACTIONS
+5. Detect DEADLINE OR TIMEFRAME
+
+Rules:
+- extract only explicit dates, deadlines, or timeframes from the email
+- if no deadline is present, return "Keine Frist erkannt"
+- do not invent dates
+- return a concise reason for urgency in "urgencyReason"
+
+Return the deadline in "deadline".
+Return the reason in "urgencyReason".
+
+6. Generate EXACTLY 3 SMART ACTIONS
 - actions must reflect the analysis focus
 
-6. Extract TODO TASKS
+7. Extract TODO TASKS
 
 Examples:
 - Angebot senden
@@ -125,7 +136,7 @@ Examples:
 Return EXACTLY 3 TODO items.
 - todos must reflect the analysis focus
 
-7. Generate PROFESSIONAL SUMMARY
+8. Generate PROFESSIONAL SUMMARY
 
 RULES:
 - concise
@@ -141,8 +152,9 @@ Summary must include:
 - requested information
 - important information
 - open questions
+- explicit deadline or note that none is visible
 
-8. Generate EXACTLY 3 PROFESSIONAL EMAIL REPLIES
+9. Generate EXACTLY 3 PROFESSIONAL EMAIL REPLIES
 
 Replies must:
 - fit email context
@@ -152,11 +164,11 @@ Replies must:
 - use this reply tone: ${toneInstruction}
 - language rule: ${languageInstruction}
 
-9. Generate ONE FOLLOW-UP EMAIL
+10. Generate ONE FOLLOW-UP EMAIL
 - follow-up must use the same reply tone
 - follow-up must follow the same language rule
 
-10. Recommend RESPONSIBLE OWNER
+11. Recommend RESPONSIBLE OWNER
 
 Choose the best routing owner:
 - Vertrieb
@@ -174,6 +186,8 @@ OUTPUT JSON ONLY:
 {
   "emailType": "Sales Anfrage",
   "recommendedOwner": "Vertrieb",
+  "deadline": "Keine Frist erkannt",
+  "urgencyReason": "Keine besondere Dringlichkeit erkannt.",
   "priority": "HIGH",
   "sentiment": "POSITIV",
   "salesChance": "HIGH",
