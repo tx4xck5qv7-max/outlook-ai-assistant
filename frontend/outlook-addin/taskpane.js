@@ -8,6 +8,43 @@ const SENSITIVE_CONFIRMATION_MS =
 
 let pendingSensitiveConfirmation = null;
 
+const PREFERENCES_STORAGE_KEY =
+  "outlookAiAssistant.preferences";
+
+const SELECT_PREFERENCES = [
+  {
+    id: "toneSelect",
+    key: "responseTone",
+    defaultValue: "professional",
+    values: [
+      "professional",
+      "friendly",
+      "concise"
+    ]
+  },
+  {
+    id: "languageSelect",
+    key: "replyLanguage",
+    defaultValue: "auto",
+    values: [
+      "auto",
+      "de",
+      "en"
+    ]
+  },
+  {
+    id: "focusSelect",
+    key: "analysisFocus",
+    defaultValue: "general",
+    values: [
+      "general",
+      "sales",
+      "support",
+      "management"
+    ]
+  }
+];
+
 const VALUE_STATE_CLASSES = [
   "valueStateHigh",
   "valueStateMedium",
@@ -165,6 +202,201 @@ function applyMetricState(element, value, metric) {
   }
 
   setValueState(element, "valueStateNeutral");
+}
+
+function getPreferencesStorage() {
+
+  try {
+    if (
+      !window.localStorage ||
+      typeof window.localStorage.getItem !==
+        "function" ||
+      typeof window.localStorage.setItem !==
+        "function"
+    ) {
+      return null;
+    }
+
+    return window.localStorage;
+  } catch (err) {
+    return null;
+  }
+}
+
+function setPreferencesStatus(message) {
+
+  const preferencesStatus =
+    document.getElementById("preferencesStatus");
+
+  if (!preferencesStatus) {
+    return;
+  }
+
+  preferencesStatus.textContent = message;
+}
+
+function readPreferences() {
+
+  const storage =
+    getPreferencesStorage();
+
+  if (!storage) {
+    return {};
+  }
+
+  try {
+    const raw =
+      storage.getItem(PREFERENCES_STORAGE_KEY);
+
+    if (!raw) {
+      return {};
+    }
+
+    const parsed =
+      JSON.parse(raw);
+
+    return parsed && typeof parsed === "object"
+      ? parsed
+      : {};
+  } catch (err) {
+    return {};
+  }
+}
+
+function isAllowedPreference(preference, value) {
+
+  return (
+    preference &&
+    Array.isArray(preference.values) &&
+    preference.values.includes(value)
+  );
+}
+
+function savePreferences() {
+
+  const storage =
+    getPreferencesStorage();
+
+  if (!storage) {
+    return;
+  }
+
+  const nextPreferences = {};
+
+  SELECT_PREFERENCES.forEach((preference) => {
+    const element =
+      document.getElementById(preference.id);
+
+    if (
+      element &&
+      isAllowedPreference(
+        preference,
+        element.value
+      )
+    ) {
+      nextPreferences[preference.key] =
+        element.value;
+    }
+  });
+
+  try {
+    storage.setItem(
+      PREFERENCES_STORAGE_KEY,
+      JSON.stringify(nextPreferences)
+    );
+  } catch (err) {
+    // Lokale Einstellungen sind Komfort, keine Voraussetzung.
+  }
+}
+
+function resetPreferences() {
+
+  const storage =
+    getPreferencesStorage();
+
+  if (storage) {
+    try {
+      if (
+        typeof storage.removeItem ===
+        "function"
+      ) {
+        storage.removeItem(
+          PREFERENCES_STORAGE_KEY
+        );
+      }
+    } catch (err) {
+      // Reset darf die Analyse nicht blockieren.
+    }
+  }
+
+  SELECT_PREFERENCES.forEach((preference) => {
+    const element =
+      document.getElementById(preference.id);
+
+    if (element && preference.defaultValue) {
+      element.value = preference.defaultValue;
+    }
+  });
+
+  setPreferencesStatus(
+    "Lokale Einstellungen zurueckgesetzt."
+  );
+}
+
+function setupPreferencePersistence() {
+
+  const storedPreferences =
+    readPreferences();
+
+  SELECT_PREFERENCES.forEach((preference) => {
+    const element =
+      document.getElementById(preference.id);
+
+    if (!element) {
+      return;
+    }
+
+    const storedValue =
+      storedPreferences[preference.key];
+
+    if (
+      isAllowedPreference(
+        preference,
+        storedValue
+      )
+    ) {
+      element.value = storedValue;
+    }
+
+    if (
+      typeof element.addEventListener ===
+      "function"
+    ) {
+      element.addEventListener(
+        "change",
+        () => {
+          savePreferences();
+          setPreferencesStatus(
+            "Einstellungen lokal gespeichert. Keine Email-Inhalte."
+          );
+        }
+      );
+    }
+  });
+
+  const resetButton =
+    document.getElementById("resetPreferencesBtn");
+
+  if (
+    resetButton &&
+    typeof resetButton.addEventListener ===
+    "function"
+  ) {
+    resetButton.addEventListener(
+      "click",
+      resetPreferences
+    );
+  }
 }
 
 function formatBriefList(title, items) {
@@ -1889,4 +2121,13 @@ async function generateAI() {
       }
     }
   );
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener(
+    "DOMContentLoaded",
+    setupPreferencePersistence
+  );
+} else {
+  setupPreferencePersistence();
 }

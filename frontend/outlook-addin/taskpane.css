@@ -121,6 +121,32 @@ h1 {
   padding: 8px 10px;
 }
 
+.settingsNotice {
+  align-items: center;
+  color: #4b5563;
+  display: flex;
+  font-size: 12px;
+  gap: 10px;
+  justify-content: space-between;
+  line-height: 1.4;
+  margin: -4px 0 14px;
+}
+
+.textButton {
+  background: transparent;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  color: #1f2937;
+  flex: 0 0 auto;
+  font-size: 12px;
+  padding: 7px 9px;
+}
+
+.textButton:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+
 button {
   border: none;
   border-radius: 10px;
