@@ -24,6 +24,23 @@ function getLanguageInstruction(replyLanguage) {
   return "write replies and the follow-up in the same language as the email whenever possible";
 }
 
+function getFocusInstruction(analysisFocus) {
+
+  if (analysisFocus === "sales") {
+    return "prioritize buying signals, objections, urgency, decision makers, requested offer details, and concrete next sales steps";
+  }
+
+  if (analysisFocus === "support") {
+    return "prioritize customer problem, impact, urgency, troubleshooting steps, missing technical details, and clear support next actions";
+  }
+
+  if (analysisFocus === "management") {
+    return "prioritize executive summary, business risk, deadlines, ownership, decisions needed, and strategic implications";
+  }
+
+  return "prioritize a balanced business analysis with clear next actions";
+}
+
 function getEmailAnalysisPrompt(emailContent, options = {}) {
 
 const responseTone =
@@ -32,11 +49,17 @@ const responseTone =
 const replyLanguage =
   options.replyLanguage || "auto";
 
+const analysisFocus =
+  options.analysisFocus || "general";
+
 const toneInstruction =
   getToneInstruction(responseTone);
 
 const languageInstruction =
   getLanguageInstruction(replyLanguage);
+
+const focusInstruction =
+  getFocusInstruction(analysisFocus);
 
 return `
 You are a PROFESSIONAL OUTLOOK EMAIL AI.
@@ -45,6 +68,9 @@ IMPORTANT:
 This is ALWAYS a REAL EMAIL.
 
 Analyze the email professionally.
+
+ANALYSIS FOCUS:
+${focusInstruction}
 
 ----------------------------------
 EMAIL:
@@ -84,6 +110,7 @@ Examples:
 - LOW
 
 5. Generate EXACTLY 3 SMART ACTIONS
+- actions must reflect the analysis focus
 
 6. Extract TODO TASKS
 
@@ -94,6 +121,7 @@ Examples:
 - Dokument prüfen
 
 Return EXACTLY 3 TODO items.
+- todos must reflect the analysis focus
 
 7. Generate PROFESSIONAL SUMMARY
 

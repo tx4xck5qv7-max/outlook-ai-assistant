@@ -19,6 +19,13 @@ const REPLY_LANGUAGES = new Set([
   "en"
 ]);
 
+const ANALYSIS_FOCUS = new Set([
+  "general",
+  "sales",
+  "support",
+  "management"
+]);
+
 function getResponseTone(req) {
 
   const {
@@ -49,6 +56,22 @@ function getReplyLanguage(req) {
   }
 
   return "auto";
+}
+
+function getAnalysisFocus(req) {
+
+  const {
+    analysisFocus
+  } = req.body;
+
+  if (
+    typeof analysisFocus === "string" &&
+    ANALYSIS_FOCUS.has(analysisFocus)
+  ) {
+    return analysisFocus;
+  }
+
+  return "general";
 }
 
 function validateEmailContent(req, res) {
@@ -138,7 +161,8 @@ exports.analyzeEmail = async (req, res) => {
       emailContent,
       {
         responseTone: getResponseTone(req),
-        replyLanguage: getReplyLanguage(req)
+        replyLanguage: getReplyLanguage(req),
+        analysisFocus: getAnalysisFocus(req)
       }
     );
 

@@ -224,6 +224,16 @@ function getSelectedLanguage() {
     : "auto";
 }
 
+function getSelectedFocus() {
+
+  const focusSelect =
+    document.getElementById("focusSelect");
+
+  return focusSelect && focusSelect.value
+    ? focusSelect.value
+    : "general";
+}
+
 async function generateAI() {
 
   const summary =
@@ -264,6 +274,9 @@ async function generateAI() {
 
   const replyLanguage =
     getSelectedLanguage();
+
+  const analysisFocus =
+    getSelectedFocus();
 
   button.disabled = true;
   button.textContent =
@@ -389,6 +402,7 @@ async function generateAI() {
               emailContent: emailText,
               responseTone,
               replyLanguage,
+              analysisFocus,
               confirmSensitiveAnalysis:
                 confirmedSensitiveAnalysis
             }

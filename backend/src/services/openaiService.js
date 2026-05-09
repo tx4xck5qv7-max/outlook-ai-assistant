@@ -110,12 +110,16 @@ async function getAIResponse(emailContent, options = {}) {
   const replyLanguage =
     options.replyLanguage || "auto";
 
+  const analysisFocus =
+    options.analysisFocus || "general";
+
   const prompt =
     getEmailAnalysisPrompt(
       cleanedEmail,
       {
         responseTone,
-        replyLanguage
+        replyLanguage,
+        analysisFocus
       }
     );
 
@@ -157,7 +161,8 @@ async function getAIResponse(emailContent, options = {}) {
         JSON.parse(raw),
         {
           responseTone,
-          replyLanguage
+          replyLanguage,
+          analysisFocus
         }
       ),
       privacy: privacyResult.report
@@ -168,7 +173,8 @@ async function getAIResponse(emailContent, options = {}) {
         {},
         {
           responseTone,
-          replyLanguage
+          replyLanguage,
+          analysisFocus
         }
       ),
       privacy: privacyResult.report
