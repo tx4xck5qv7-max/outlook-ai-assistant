@@ -132,10 +132,21 @@ Rules:
 - return one concise escalation recommendation in "escalationRecommendation"
 - do not invent risks that are not supported by the email
 
-7. Generate EXACTLY 3 SMART ACTIONS
+7. Explain CONFIDENCE AND EVIDENCE
+
+Rules:
+- classify confidence in "confidenceLevel" as HIGH, MEDIUM, or LOW
+- confidence means how well the email supports the analysis
+- return one concise explanation in "decisionRationale"
+- return EXACTLY 3 short evidence snippets in "evidenceSnippets"
+- evidence snippets must be short excerpts or close paraphrases from the anonymized email
+- do not include personal data beyond anonymized placeholders
+- do not invent evidence
+
+8. Generate EXACTLY 3 SMART ACTIONS
 - actions must reflect the analysis focus
 
-8. Extract TODO TASKS
+9. Extract TODO TASKS
 
 Examples:
 - Angebot senden
@@ -146,7 +157,7 @@ Examples:
 Return EXACTLY 3 TODO items.
 - todos must reflect the analysis focus
 
-9. Generate PROFESSIONAL SUMMARY
+10. Generate PROFESSIONAL SUMMARY
 
 RULES:
 - concise
@@ -164,8 +175,9 @@ Summary must include:
 - open questions
 - explicit deadline or note that none is visible
 - business risk and escalation note
+- confidence and evidence note
 
-10. Generate EXACTLY 3 PROFESSIONAL EMAIL REPLIES
+11. Generate EXACTLY 3 PROFESSIONAL EMAIL REPLIES
 
 Replies must:
 - fit email context
@@ -175,11 +187,11 @@ Replies must:
 - use this reply tone: ${toneInstruction}
 - language rule: ${languageInstruction}
 
-11. Generate ONE FOLLOW-UP EMAIL
+12. Generate ONE FOLLOW-UP EMAIL
 - follow-up must use the same reply tone
 - follow-up must follow the same language rule
 
-12. Recommend RESPONSIBLE OWNER
+13. Recommend RESPONSIBLE OWNER
 
 Choose the best routing owner:
 - Vertrieb
@@ -201,6 +213,8 @@ OUTPUT JSON ONLY:
   "urgencyReason": "Keine besondere Dringlichkeit erkannt.",
   "riskLevel": "LOW",
   "escalationRecommendation": "Keine Eskalation empfohlen.",
+  "confidenceLevel": "MEDIUM",
+  "decisionRationale": "Kurze Begruendung der Analyse.",
   "priority": "HIGH",
   "sentiment": "POSITIV",
   "salesChance": "HIGH",
@@ -208,6 +222,11 @@ OUTPUT JSON ONLY:
     "Risiko 1",
     "Risiko 2",
     "Risiko 3"
+  ],
+  "evidenceSnippets": [
+    "Evidenz 1",
+    "Evidenz 2",
+    "Evidenz 3"
   ],
   "actions": [
     "Aktion 1",

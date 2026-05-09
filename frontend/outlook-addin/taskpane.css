@@ -182,6 +182,25 @@ button:hover {
   padding: 10px;
 }
 
+.rationaleBox {
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  line-height: 1.45;
+  margin-bottom: 8px;
+  overflow-wrap: anywhere;
+  padding: 10px;
+}
+
+.evidenceCard {
+  background: #eef6ff;
+  border-radius: 8px;
+  color: #1e3a8a;
+  margin-bottom: 8px;
+  overflow-wrap: anywhere;
+  padding: 10px;
+}
+
 .handoffBox {
   background: #f8fafc;
   border: 1px solid #e5e7eb;

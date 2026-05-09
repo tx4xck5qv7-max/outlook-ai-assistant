@@ -79,11 +79,16 @@ function buildHandoffBrief(data) {
     `Zustaendig: ${safeData.recommendedOwner || "-"}`,
     `Prioritaet: ${safeData.priority || "-"}`,
     `Risiko: ${safeData.riskLevel || "-"}`,
+    `Sicherheit: ${safeData.confidenceLevel || "-"}`,
     `Frist: ${safeData.deadline || "Keine Frist erkannt"}`,
     `Dringlichkeit: ${safeData.urgencyReason || "-"}`,
     `Eskalation: ${
       safeData.escalationRecommendation ||
       "Keine Eskalation empfohlen."
+    }`,
+    `Begruendung: ${
+      safeData.decisionRationale ||
+      "Keine belastbare Begruendung erhalten."
     }`,
     "",
     "Zusammenfassung:",
@@ -93,7 +98,9 @@ function buildHandoffBrief(data) {
     "",
     formatBriefList("Todos", safeData.todos),
     "",
-    formatBriefList("Risiko-Hinweise", safeData.riskFlags)
+    formatBriefList("Risiko-Hinweise", safeData.riskFlags),
+    "",
+    formatBriefList("Evidenz", safeData.evidenceSnippets)
   ].join("\n");
 }
 
@@ -397,11 +404,20 @@ async function generateAI() {
   const riskFlags =
     document.getElementById("riskFlags");
 
+  const evidenceSnippets =
+    document.getElementById("evidenceSnippets");
+
   const riskLevelBox =
     document.getElementById("riskLevelBox");
 
+  const confidenceBox =
+    document.getElementById("confidenceBox");
+
   const escalationBox =
     document.getElementById("escalationBox");
+
+  const decisionRationale =
+    document.getElementById("decisionRationale");
 
   const handoffBrief =
     document.getElementById("handoffBrief");
@@ -462,6 +478,7 @@ async function generateAI() {
   actions.innerHTML = "";
   todos.innerHTML = "";
   riskFlags.innerHTML = "";
+  evidenceSnippets.innerHTML = "";
   followUp.innerHTML = "";
   handoffBrief.textContent =
     "Uebergabe wird vorbereitet...";
@@ -490,6 +507,9 @@ async function generateAI() {
       "Datenschutzprüfung nur im Outlook-Kontext möglich.";
 
     handoffBrief.textContent =
+      "Outlook-Kontext nicht verfuegbar.";
+
+    decisionRationale.textContent =
       "Outlook-Kontext nicht verfuegbar.";
 
     button.disabled = false;
@@ -614,6 +634,9 @@ async function generateAI() {
         salesBox.textContent =
           data.salesChance || "-";
 
+        confidenceBox.textContent =
+          data.confidenceLevel || "-";
+
         riskLevelBox.textContent =
           data.riskLevel || "-";
 
@@ -626,6 +649,18 @@ async function generateAI() {
           data.riskFlags,
           "riskCard",
           "Keine besonderen Risiken erkannt.",
+          ""
+        );
+
+        decisionRationale.textContent =
+          data.decisionRationale ||
+          "Keine belastbare Begruendung erhalten.";
+
+        renderList(
+          evidenceSnippets,
+          data.evidenceSnippets,
+          "evidenceCard",
+          "Keine eindeutigen Evidenzstellen erkannt.",
           ""
         );
 
@@ -736,7 +771,7 @@ async function generateAI() {
             "button";
 
           draftBtn.textContent =
-            "Als Outlook-Antwort öffnen";
+            "Als Outlook-Antwort oeffnen";
 
           draftBtn.onclick = () => {
             openReplyDraft(
@@ -771,6 +806,9 @@ async function generateAI() {
 
         handoffBrief.textContent =
           "Uebergabe nicht erstellt.";
+
+        decisionRationale.textContent =
+          "Begruendung nicht erstellt.";
 
         handoffCopyBtn.disabled = true;
       }

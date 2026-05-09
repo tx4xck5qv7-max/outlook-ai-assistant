@@ -82,6 +82,14 @@ function normalizeAIResponse(data, metadata) {
       safeData.escalationRecommendation,
       "Keine Eskalation empfohlen."
     ),
+    confidenceLevel: getString(
+      safeData.confidenceLevel,
+      "MEDIUM"
+    ),
+    decisionRationale: getString(
+      safeData.decisionRationale,
+      "Keine belastbare Begruendung erhalten."
+    ),
     priority: getString(safeData.priority, "MEDIUM"),
     sentiment: getString(safeData.sentiment, "NEUTRAL"),
     salesChance: getString(safeData.salesChance, "LOW"),
@@ -89,6 +97,11 @@ function normalizeAIResponse(data, metadata) {
       "Keine besonderen Risiken erkannt.",
       "Keine Eskalation erforderlich.",
       "Normale Bearbeitung ausreichend."
+    ]),
+    evidenceSnippets: getList(safeData.evidenceSnippets, [
+      "Keine eindeutigen Evidenzstellen erkannt.",
+      "Analyse basiert auf dem anonymisierten Email-Kontext.",
+      "Keine zusaetzlichen Belege vorhanden."
     ]),
     actions: getList(safeData.actions, [
       "Email pruefen",
