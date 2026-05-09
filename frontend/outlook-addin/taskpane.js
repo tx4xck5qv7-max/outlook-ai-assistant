@@ -46,6 +46,15 @@ const SELECT_PREFERENCES = [
       "support",
       "management"
     ]
+  },
+  {
+    id: "privacyModeSelect",
+    key: "privacyMode",
+    defaultValue: "standard",
+    values: [
+      "standard",
+      "strict"
+    ]
   }
 ];
 
@@ -528,6 +537,12 @@ function getAuditTimestamp() {
   }
 }
 
+function getPrivacyModeLabel(privacyMode) {
+  return privacyMode === "strict"
+    ? "Streng"
+    : "Standard";
+}
+
 function buildAnalysisAuditLog(data, privacy, context) {
 
   const safeData =
@@ -623,6 +638,12 @@ function buildAnalysisAuditLog(data, privacy, context) {
       safeContext.analysisFocus ||
       metadata.analysisFocus ||
       "-"
+    }`,
+    `Datenschutzmodus: ${
+      getPrivacyModeLabel(
+        safeContext.privacyMode ||
+        metadata.privacyMode
+      )
     }`,
     "",
     "Ergebnis-Metadaten:",
@@ -1618,6 +1639,17 @@ function getSelectedFocus() {
     : "general";
 }
 
+function getSelectedPrivacyMode() {
+
+  const privacyModeSelect =
+    document.getElementById("privacyModeSelect");
+
+  return privacyModeSelect &&
+    privacyModeSelect.value === "strict"
+    ? "strict"
+    : "standard";
+}
+
 async function generateAI() {
 
   const summary =
@@ -1745,6 +1777,9 @@ async function generateAI() {
 
   const analysisFocus =
     getSelectedFocus();
+
+  const privacyMode =
+    getSelectedPrivacyMode();
 
   button.disabled = true;
   button.textContent =
@@ -1957,6 +1992,75 @@ async function generateAI() {
             privacyPreview.privacy
           );
 
+        if (
+          sensitivity.requiresReview &&
+          privacyMode === "strict"
+        ) {
+          clearSensitiveConfirmation();
+
+          summary.textContent =
+            "Sensible Email erkannt. Strenger Datenschutzmodus blockiert die KI-Analyse.";
+
+          quickOverviewBox.textContent =
+            "Keine KI-Analyse ausgefuehrt. Bitte Email intern manuell pruefen.";
+
+          clarificationBox.textContent =
+            "Klaerungsbedarf manuell im Originalkontext pruefen.";
+
+          status.textContent =
+            "Analyse durch Datenschutzmodus blockiert.";
+
+          button.textContent =
+            "Analysieren";
+
+          calendarRecommendationBox.textContent =
+            "Kalendercheck blockiert, weil keine KI-Analyse ausgefuehrt wurde.";
+
+          ticketExportBox.textContent =
+            "Ticket erst nach manueller Datenschutzfreigabe erstellen.";
+
+          ticketExportCopyBtn.disabled = true;
+
+          approvalCheckBox.textContent =
+            "Freigabe erforderlich: Sensible Email wurde nicht an KI gesendet.";
+
+          approvalCheckCopyBtn.disabled = true;
+
+          sendReadinessBox.textContent =
+            "Status: Nicht versandbereit\n\nCheckliste:\n- Sensible Inhalte manuell pruefen.\n- Datenschutzfreigabe intern klaeren.\n- Keine automatische KI-Antwort verwenden.";
+
+          const blockedAuditText =
+            buildAnalysisAuditLog(
+              null,
+              privacyPreview.privacy,
+              {
+                aiStatus:
+                  "Blockiert: strenger Datenschutzmodus, Email nicht an KI gesendet",
+                responseTone,
+                replyLanguage,
+                analysisFocus,
+                privacyMode
+              }
+            );
+
+          analysisAuditBox.textContent =
+            blockedAuditText;
+
+          analysisAuditCopyBtn.disabled = false;
+          analysisAuditCopyBtn.onclick = () => {
+            copyText(
+              blockedAuditText,
+              status,
+              "Analyseprotokoll kopiert"
+            );
+          };
+
+          setAnalysisProgress(false);
+
+          button.disabled = false;
+          return;
+        }
+
         const confirmedSensitiveAnalysis =
           sensitivity.requiresReview &&
           hasSensitiveConfirmation(
@@ -2011,7 +2115,8 @@ async function generateAI() {
                   "Pausiert: sensible Email nicht an KI gesendet",
                 responseTone,
                 replyLanguage,
-                analysisFocus
+                analysisFocus,
+                privacyMode
               }
             );
 
@@ -2051,6 +2156,7 @@ async function generateAI() {
               responseTone,
               replyLanguage,
               analysisFocus,
+              privacyMode,
               confirmSensitiveAnalysis:
                 confirmedSensitiveAnalysis
             }
@@ -2248,7 +2354,8 @@ async function generateAI() {
                 "Analyse abgeschlossen",
               responseTone,
               replyLanguage,
-              analysisFocus
+              analysisFocus,
+              privacyMode
             }
           );
 
@@ -2429,7 +2536,8 @@ async function generateAI() {
                 "Fehler: Analyse nicht abgeschlossen",
               responseTone,
               replyLanguage,
-              analysisFocus
+              analysisFocus,
+              privacyMode
             }
           );
 

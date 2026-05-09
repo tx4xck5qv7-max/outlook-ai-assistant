@@ -74,6 +74,11 @@ function getAnalysisFocus(req) {
   return "general";
 }
 
+function isStrictPrivacyMode(req) {
+
+  return req.body.privacyMode === "strict";
+}
+
 function validateEmailContent(req, res) {
 
   const {
@@ -145,6 +150,17 @@ exports.analyzeEmail = async (req, res) => {
 
     const sensitivity =
       privacyResult.report.sensitivity;
+
+    if (
+      sensitivity.requiresReview &&
+      isStrictPrivacyMode(req)
+    ) {
+      return res.status(409).json({
+        error: "Sensible Email durch Datenschutzmodus blockiert.",
+        blockedByPolicy: true,
+        privacy: privacyResult.report
+      });
+    }
 
     if (
       sensitivity.requiresReview &&
