@@ -214,6 +214,16 @@ function getSelectedTone() {
     : "professional";
 }
 
+function getSelectedLanguage() {
+
+  const languageSelect =
+    document.getElementById("languageSelect");
+
+  return languageSelect && languageSelect.value
+    ? languageSelect.value
+    : "auto";
+}
+
 async function generateAI() {
 
   const summary =
@@ -251,6 +261,9 @@ async function generateAI() {
 
   const responseTone =
     getSelectedTone();
+
+  const replyLanguage =
+    getSelectedLanguage();
 
   button.disabled = true;
   button.textContent =
@@ -375,6 +388,7 @@ async function generateAI() {
             {
               emailContent: emailText,
               responseTone,
+              replyLanguage,
               confirmSensitiveAnalysis:
                 confirmedSensitiveAnalysis
             }

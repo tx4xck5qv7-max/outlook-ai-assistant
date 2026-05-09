@@ -11,13 +11,32 @@ function getToneInstruction(responseTone) {
   return "professional, precise, respectful, and business formal";
 }
 
+function getLanguageInstruction(replyLanguage) {
+
+  if (replyLanguage === "de") {
+    return "write all replies and the follow-up in German";
+  }
+
+  if (replyLanguage === "en") {
+    return "write all replies and the follow-up in English";
+  }
+
+  return "write replies and the follow-up in the same language as the email whenever possible";
+}
+
 function getEmailAnalysisPrompt(emailContent, options = {}) {
 
 const responseTone =
   options.responseTone || "professional";
 
+const replyLanguage =
+  options.replyLanguage || "auto";
+
 const toneInstruction =
   getToneInstruction(responseTone);
+
+const languageInstruction =
+  getLanguageInstruction(replyLanguage);
 
 return `
 You are a PROFESSIONAL OUTLOOK EMAIL AI.
@@ -101,9 +120,11 @@ Replies must:
 - sound business professional
 - answer sender requests
 - use this reply tone: ${toneInstruction}
+- language rule: ${languageInstruction}
 
 9. Generate ONE FOLLOW-UP EMAIL
 - follow-up must use the same reply tone
+- follow-up must follow the same language rule
 
 OUTPUT JSON ONLY:
 

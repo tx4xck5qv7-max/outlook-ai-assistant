@@ -13,6 +13,12 @@ const RESPONSE_TONES = new Set([
   "concise"
 ]);
 
+const REPLY_LANGUAGES = new Set([
+  "auto",
+  "de",
+  "en"
+]);
+
 function getResponseTone(req) {
 
   const {
@@ -27,6 +33,22 @@ function getResponseTone(req) {
   }
 
   return "professional";
+}
+
+function getReplyLanguage(req) {
+
+  const {
+    replyLanguage
+  } = req.body;
+
+  if (
+    typeof replyLanguage === "string" &&
+    REPLY_LANGUAGES.has(replyLanguage)
+  ) {
+    return replyLanguage;
+  }
+
+  return "auto";
 }
 
 function validateEmailContent(req, res) {
@@ -115,7 +137,8 @@ exports.analyzeEmail = async (req, res) => {
     const result = await getAIResponse(
       emailContent,
       {
-        responseTone: getResponseTone(req)
+        responseTone: getResponseTone(req),
+        replyLanguage: getReplyLanguage(req)
       }
     );
 
