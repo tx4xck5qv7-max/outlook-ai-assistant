@@ -272,6 +272,20 @@ button:hover {
   padding: 10px;
 }
 
+.privacyReportBox {
+  background: #eef6f3;
+  border: 1px solid #cfe7df;
+  border-radius: 8px;
+  color: #275548;
+  line-height: 1.45;
+  margin-bottom: 10px;
+  max-height: 180px;
+  overflow: auto;
+  overflow-wrap: anywhere;
+  padding: 10px;
+  white-space: pre-wrap;
+}
+
 .rationaleBox {
   background: #f8fafc;
   border: 1px solid #e5e7eb;

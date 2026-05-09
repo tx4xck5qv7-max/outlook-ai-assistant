@@ -160,6 +160,70 @@ function getCalendarAccessMessage(calendarRelevance) {
   return "Kalenderzugriff: Vorpruefung ohne Kalenderdaten.";
 }
 
+function buildPrivacyAuditReport(privacy) {
+
+  const safePrivacy =
+    privacy && typeof privacy === "object"
+      ? privacy
+      : {};
+
+  const sensitivity =
+    safePrivacy.sensitivity &&
+    typeof safePrivacy.sensitivity === "object"
+      ? safePrivacy.sensitivity
+      : {
+        level: "LOW",
+        categories: [],
+        requiresReview: false
+      };
+
+  const detected =
+    Array.isArray(safePrivacy.detected)
+      ? safePrivacy.detected
+      : [];
+
+  const categories =
+    Array.isArray(sensitivity.categories)
+      ? sensitivity.categories
+      : [];
+
+  return [
+    "Datenschutzbericht",
+    "",
+    "Verarbeitung: Lokales HTTPS-Backend auf localhost:3001",
+    "Speicherung: Keine Email-Inhalte im Backend",
+    "KI-Weitergabe: Nur anonymisierte Email-Inhalte nach lokaler Vorpruefung",
+    "Kalender: Keine echten Kalenderdaten gelesen",
+    `Anonymisierung aktiv: ${
+      safePrivacy.anonymized ? "ja" : "nein"
+    }`,
+    `Maskierte Muster: ${
+      detected.length
+        ? detected.join(", ")
+        : "keine typischen Muster erkannt"
+    }`,
+    `Sensitivitaet: ${sensitivity.level || "LOW"}`,
+    `Sensible Kategorien: ${
+      categories.length
+        ? categories.join(", ")
+        : "keine"
+    }`,
+    `Bestaetigung erforderlich: ${
+      sensitivity.requiresReview ? "ja" : "nein"
+    }`,
+    `Original-Laenge: ${
+      Number.isFinite(safePrivacy.originalLength)
+        ? safePrivacy.originalLength
+        : 0
+    } Zeichen`,
+    `Anonymisierte Laenge: ${
+      Number.isFinite(safePrivacy.sanitizedLength)
+        ? safePrivacy.sanitizedLength
+        : 0
+    } Zeichen`
+  ].join("\n");
+}
+
 function escapeHtml(value) {
 
   return String(value)
@@ -493,6 +557,12 @@ async function generateAI() {
   const privacyStatus =
     document.getElementById("privacyStatus");
 
+  const privacyReportBox =
+    document.getElementById("privacyReportBox");
+
+  const privacyReportCopyBtn =
+    document.getElementById("privacyReportCopyBtn");
+
   const priorityBox =
     document.getElementById("priorityBox");
 
@@ -561,6 +631,10 @@ async function generateAI() {
     "Uebergabe wird vorbereitet...";
   handoffCopyBtn.disabled = true;
   handoffCopyBtn.onclick = null;
+  privacyReportBox.textContent =
+    "Datenschutzbericht wird vorbereitet...";
+  privacyReportCopyBtn.disabled = true;
+  privacyReportCopyBtn.onclick = null;
 
   status.textContent =
     "Denke nach...";
@@ -597,6 +671,9 @@ async function generateAI() {
 
     handoffBrief.textContent =
       "Outlook-Kontext nicht verfuegbar.";
+
+    privacyReportBox.textContent =
+      "Datenschutzbericht nur im Outlook-Kontext moeglich.";
 
     decisionRationale.textContent =
       "Outlook-Kontext nicht verfuegbar.";
@@ -650,6 +727,23 @@ async function generateAI() {
           privacyStatus,
           privacyPreview.privacy
         );
+
+        const privacyReportText =
+          buildPrivacyAuditReport(
+            privacyPreview.privacy
+          );
+
+        privacyReportBox.textContent =
+          privacyReportText;
+
+        privacyReportCopyBtn.disabled = false;
+        privacyReportCopyBtn.onclick = () => {
+          copyText(
+            privacyReportText,
+            status,
+            "Datenschutzbericht kopiert"
+          );
+        };
 
         privacyChecked = true;
 
@@ -944,6 +1038,13 @@ async function generateAI() {
 
         handoffBrief.textContent =
           "Uebergabe nicht erstellt.";
+
+        if (!privacyChecked) {
+          privacyReportBox.textContent =
+            "Datenschutzbericht nicht erstellt.";
+
+          privacyReportCopyBtn.disabled = true;
+        }
 
         decisionRationale.textContent =
           "Begruendung nicht erstellt.";
