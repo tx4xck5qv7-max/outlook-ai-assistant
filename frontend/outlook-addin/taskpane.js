@@ -115,6 +115,196 @@ function buildHandoffBrief(data) {
   ].join("\n");
 }
 
+function buildWorkflowTicket(data, privacy) {
+
+  const safeData =
+    data && typeof data === "object"
+      ? data
+      : {};
+
+  const safePrivacy =
+    privacy && typeof privacy === "object"
+      ? privacy
+      : {};
+
+  const sensitivity =
+    safePrivacy.sensitivity &&
+    typeof safePrivacy.sensitivity === "object"
+      ? safePrivacy.sensitivity
+      : {
+        level: "LOW",
+        categories: []
+      };
+
+  const categories =
+    Array.isArray(sensitivity.categories)
+      ? sensitivity.categories
+      : [];
+
+  const titleParts = [
+    safeData.emailType || "Email",
+    safeData.priority || "MEDIUM",
+    safeData.deadline &&
+    safeData.deadline !== "Keine Frist erkannt"
+      ? safeData.deadline
+      : ""
+  ].filter(Boolean);
+
+  return [
+    "CRM/Ticket-Export",
+    "",
+    `Titel: ${titleParts.join(" | ")}`,
+    `Kategorie: ${safeData.emailType || "Unklar"}`,
+    `Zustaendig: ${safeData.recommendedOwner || "Allgemein"}`,
+    `Prioritaet: ${safeData.priority || "MEDIUM"}`,
+    `Risiko: ${safeData.riskLevel || "LOW"}`,
+    `Sales-Chance: ${safeData.salesChance || "LOW"}`,
+    `Frist: ${safeData.deadline || "Keine Frist erkannt"}`,
+    `Kalender-Risiko: ${safeData.calendarConflictRisk || "UNKNOWN"}`,
+    `Sicherheit: ${safeData.confidenceLevel || "MEDIUM"}`,
+    "",
+    "Beschreibung:",
+    safeData.summary || "-",
+    "",
+    formatBriefList("Naechste Schritte", safeData.actions),
+    "",
+    formatBriefList("Todos", safeData.todos),
+    "",
+    `Datenschutz: ${
+      safePrivacy.anonymized
+        ? "anonymisiert"
+        : "keine typischen Muster erkannt"
+    }`,
+    `Sensitivitaet: ${sensitivity.level || "LOW"}`,
+    `Sensible Kategorien: ${
+      categories.length
+        ? categories.join(", ")
+        : "keine"
+    }`
+  ].join("\n");
+}
+
+function buildApprovalCheck(data, privacy) {
+
+  const safeData =
+    data && typeof data === "object"
+      ? data
+      : {};
+
+  const safePrivacy =
+    privacy && typeof privacy === "object"
+      ? privacy
+      : {};
+
+  const sensitivity =
+    safePrivacy.sensitivity &&
+    typeof safePrivacy.sensitivity === "object"
+      ? safePrivacy.sensitivity
+      : {
+        level: "LOW",
+        categories: [],
+        requiresReview: false
+      };
+
+  const categories =
+    Array.isArray(sensitivity.categories)
+      ? sensitivity.categories
+      : [];
+
+  const riskLevel =
+    String(safeData.riskLevel || "LOW")
+      .toUpperCase();
+
+  const priority =
+    String(safeData.priority || "MEDIUM")
+      .toUpperCase();
+
+  const confidenceLevel =
+    String(safeData.confidenceLevel || "MEDIUM")
+      .toUpperCase();
+
+  const calendarRisk =
+    String(safeData.calendarConflictRisk || "UNKNOWN")
+      .toUpperCase();
+
+  const reasons = [];
+
+  if (sensitivity.requiresReview) {
+    reasons.push(
+      "Sensible Inhalte erkannt; bewusste fachliche Pruefung empfohlen."
+    );
+  }
+
+  if (riskLevel === "HIGH") {
+    reasons.push(
+      "Hohes Business-Risiko erkannt; Antwort sollte intern freigegeben werden."
+    );
+  }
+
+  if (calendarRisk === "HIGH") {
+    reasons.push(
+      "Moeglicher Termin- oder Kalenderkonflikt; Verfuegbarkeit vor Zusage pruefen."
+    );
+  }
+
+  if (confidenceLevel === "LOW") {
+    reasons.push(
+      "Niedrige KI-Sicherheit; Analyse gegen Originalmail pruefen."
+    );
+  }
+
+  if (
+    priority === "HIGH" &&
+    riskLevel !== "LOW"
+  ) {
+    reasons.push(
+      "Hohe Prioritaet mit erkennbarem Risiko; keine automatische Antwort ohne Review."
+    );
+  }
+
+  const approvalRequired =
+    reasons.length > 0;
+
+  return [
+    "Antwort-Freigabe",
+    "",
+    `Status: ${
+      approvalRequired
+        ? "Freigabe erforderlich"
+        : "Standardfreigabe ausreichend"
+    }`,
+    `Empfehlung: ${
+      approvalRequired
+        ? "Antwort vor Versand fachlich pruefen lassen."
+        : "Antwort kann nach normaler fachlicher Sichtung verwendet werden."
+    }`,
+    `Risiko: ${riskLevel}`,
+    `Prioritaet: ${priority}`,
+    `KI-Sicherheit: ${confidenceLevel}`,
+    `Kalender-Risiko: ${calendarRisk}`,
+    `Sensitivitaet: ${sensitivity.level || "LOW"}`,
+    `Sensible Kategorien: ${
+      categories.length
+        ? categories.join(", ")
+        : "keine"
+    }`,
+    "",
+    formatBriefList(
+      "Pruefgruende",
+      approvalRequired
+        ? reasons
+        : [
+          "Keine besonderen Freigabegruende erkannt.",
+          "Keine sensiblen Kategorien erkannt.",
+          "Standardprozess ausreichend."
+        ]
+    ),
+    "",
+    "Kontrollhinweis:",
+    "Keine Email-Inhalte speichern; Antwort vor Versand gegen Originalmail pruefen."
+  ].join("\n");
+}
+
 function setAnalysisProgress(isActive, message) {
 
   const progress =
@@ -548,6 +738,18 @@ async function generateAI() {
   const handoffCopyBtn =
     document.getElementById("handoffCopyBtn");
 
+  const ticketExportBox =
+    document.getElementById("ticketExportBox");
+
+  const ticketExportCopyBtn =
+    document.getElementById("ticketExportCopyBtn");
+
+  const approvalCheckBox =
+    document.getElementById("approvalCheckBox");
+
+  const approvalCheckCopyBtn =
+    document.getElementById("approvalCheckCopyBtn");
+
   const followUp =
     document.getElementById("followUp");
 
@@ -631,6 +833,14 @@ async function generateAI() {
     "Uebergabe wird vorbereitet...";
   handoffCopyBtn.disabled = true;
   handoffCopyBtn.onclick = null;
+  ticketExportBox.textContent =
+    "Ticket wird vorbereitet...";
+  ticketExportCopyBtn.disabled = true;
+  ticketExportCopyBtn.onclick = null;
+  approvalCheckBox.textContent =
+    "Freigabe-Check wird vorbereitet...";
+  approvalCheckCopyBtn.disabled = true;
+  approvalCheckCopyBtn.onclick = null;
   privacyReportBox.textContent =
     "Datenschutzbericht wird vorbereitet...";
   privacyReportCopyBtn.disabled = true;
@@ -672,6 +882,12 @@ async function generateAI() {
     handoffBrief.textContent =
       "Outlook-Kontext nicht verfuegbar.";
 
+    ticketExportBox.textContent =
+      "Ticket-Export nur im Outlook-Kontext moeglich.";
+
+    approvalCheckBox.textContent =
+      "Freigabe-Check nur im Outlook-Kontext moeglich.";
+
     privacyReportBox.textContent =
       "Datenschutzbericht nur im Outlook-Kontext moeglich.";
 
@@ -687,6 +903,8 @@ async function generateAI() {
     setAnalysisProgress(false);
 
     button.disabled = false;
+    button.textContent =
+      "Analysieren";
     return;
   }
 
@@ -785,6 +1003,16 @@ async function generateAI() {
 
           calendarRecommendationBox.textContent =
             "Kalendercheck pausiert bis zur bewussten Bestaetigung.";
+
+          ticketExportBox.textContent =
+            "Ticket erst nach bestaetigter Analyse verfuegbar.";
+
+          ticketExportCopyBtn.disabled = true;
+
+          approvalCheckBox.textContent =
+            "Freigabe-Check erst nach bestaetigter Analyse verfuegbar.";
+
+          approvalCheckCopyBtn.disabled = true;
 
           setAnalysisProgress(false);
 
@@ -906,6 +1134,42 @@ async function generateAI() {
             handoffText,
             status,
             "Uebergabe kopiert"
+          );
+        };
+
+        const ticketExportText =
+          buildWorkflowTicket(
+            data,
+            privacyPreview.privacy
+          );
+
+        ticketExportBox.textContent =
+          ticketExportText;
+
+        ticketExportCopyBtn.disabled = false;
+        ticketExportCopyBtn.onclick = () => {
+          copyText(
+            ticketExportText,
+            status,
+            "Ticket kopiert"
+          );
+        };
+
+        const approvalCheckText =
+          buildApprovalCheck(
+            data,
+            privacyPreview.privacy
+          );
+
+        approvalCheckBox.textContent =
+          approvalCheckText;
+
+        approvalCheckCopyBtn.disabled = false;
+        approvalCheckCopyBtn.onclick = () => {
+          copyText(
+            approvalCheckText,
+            status,
+            "Freigabe-Check kopiert"
           );
         };
 
@@ -1038,6 +1302,16 @@ async function generateAI() {
 
         handoffBrief.textContent =
           "Uebergabe nicht erstellt.";
+
+        ticketExportBox.textContent =
+          "Ticket nicht erstellt.";
+
+        ticketExportCopyBtn.disabled = true;
+
+        approvalCheckBox.textContent =
+          "Freigabe-Check nicht erstellt.";
+
+        approvalCheckCopyBtn.disabled = true;
 
         if (!privacyChecked) {
           privacyReportBox.textContent =
