@@ -77,9 +77,19 @@ function normalizeAIResponse(data, metadata) {
       safeData.urgencyReason,
       "Keine besondere Dringlichkeit erkannt."
     ),
+    riskLevel: getString(safeData.riskLevel, "LOW"),
+    escalationRecommendation: getString(
+      safeData.escalationRecommendation,
+      "Keine Eskalation empfohlen."
+    ),
     priority: getString(safeData.priority, "MEDIUM"),
     sentiment: getString(safeData.sentiment, "NEUTRAL"),
     salesChance: getString(safeData.salesChance, "LOW"),
+    riskFlags: getList(safeData.riskFlags, [
+      "Keine besonderen Risiken erkannt.",
+      "Keine Eskalation erforderlich.",
+      "Normale Bearbeitung ausreichend."
+    ]),
     actions: getList(safeData.actions, [
       "Email pruefen",
       "Naechsten Schritt festlegen",

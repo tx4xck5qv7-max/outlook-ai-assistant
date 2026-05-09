@@ -150,6 +150,38 @@ button:hover {
   margin-bottom: 8px;
 }
 
+.riskHeader {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.riskHeader strong {
+  color: #7c2d12;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.escalationBox {
+  background: #fff7ed;
+  border-radius: 8px;
+  color: #7c2d12;
+  line-height: 1.4;
+  margin-bottom: 8px;
+  overflow-wrap: anywhere;
+  padding: 10px;
+}
+
+.riskCard {
+  background: #fef2f2;
+  border-radius: 8px;
+  color: #7f1d1d;
+  margin-bottom: 8px;
+  overflow-wrap: anywhere;
+  padding: 10px;
+}
+
 .replyButton {
   width: 100%;
   text-align: left;

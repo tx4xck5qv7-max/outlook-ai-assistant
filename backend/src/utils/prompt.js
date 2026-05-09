@@ -122,10 +122,20 @@ Rules:
 Return the deadline in "deadline".
 Return the reason in "urgencyReason".
 
-6. Generate EXACTLY 3 SMART ACTIONS
+6. Detect BUSINESS RISK AND ESCALATION
+
+Rules:
+- classify the business risk as HIGH, MEDIUM, or LOW in "riskLevel"
+- consider legal, financial, privacy, security, churn, deadline, complaint, outage, executive, and contract risk
+- return EXACTLY 3 concise evidence-based risk flags in "riskFlags"
+- if no notable risk is visible, say that explicitly in the risk flags
+- return one concise escalation recommendation in "escalationRecommendation"
+- do not invent risks that are not supported by the email
+
+7. Generate EXACTLY 3 SMART ACTIONS
 - actions must reflect the analysis focus
 
-7. Extract TODO TASKS
+8. Extract TODO TASKS
 
 Examples:
 - Angebot senden
@@ -136,7 +146,7 @@ Examples:
 Return EXACTLY 3 TODO items.
 - todos must reflect the analysis focus
 
-8. Generate PROFESSIONAL SUMMARY
+9. Generate PROFESSIONAL SUMMARY
 
 RULES:
 - concise
@@ -153,8 +163,9 @@ Summary must include:
 - important information
 - open questions
 - explicit deadline or note that none is visible
+- business risk and escalation note
 
-9. Generate EXACTLY 3 PROFESSIONAL EMAIL REPLIES
+10. Generate EXACTLY 3 PROFESSIONAL EMAIL REPLIES
 
 Replies must:
 - fit email context
@@ -164,11 +175,11 @@ Replies must:
 - use this reply tone: ${toneInstruction}
 - language rule: ${languageInstruction}
 
-10. Generate ONE FOLLOW-UP EMAIL
+11. Generate ONE FOLLOW-UP EMAIL
 - follow-up must use the same reply tone
 - follow-up must follow the same language rule
 
-11. Recommend RESPONSIBLE OWNER
+12. Recommend RESPONSIBLE OWNER
 
 Choose the best routing owner:
 - Vertrieb
@@ -188,9 +199,16 @@ OUTPUT JSON ONLY:
   "recommendedOwner": "Vertrieb",
   "deadline": "Keine Frist erkannt",
   "urgencyReason": "Keine besondere Dringlichkeit erkannt.",
+  "riskLevel": "LOW",
+  "escalationRecommendation": "Keine Eskalation empfohlen.",
   "priority": "HIGH",
   "sentiment": "POSITIV",
   "salesChance": "HIGH",
+  "riskFlags": [
+    "Risiko 1",
+    "Risiko 2",
+    "Risiko 3"
+  ],
   "actions": [
     "Aktion 1",
     "Aktion 2",

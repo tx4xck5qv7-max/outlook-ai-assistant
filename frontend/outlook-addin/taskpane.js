@@ -248,6 +248,15 @@ async function generateAI() {
   const todos =
     document.getElementById("todos");
 
+  const riskFlags =
+    document.getElementById("riskFlags");
+
+  const riskLevelBox =
+    document.getElementById("riskLevelBox");
+
+  const escalationBox =
+    document.getElementById("escalationBox");
+
   const followUp =
     document.getElementById("followUp");
 
@@ -300,6 +309,7 @@ async function generateAI() {
   suggestions.innerHTML = "";
   actions.innerHTML = "";
   todos.innerHTML = "";
+  riskFlags.innerHTML = "";
   followUp.innerHTML = "";
 
   status.textContent =
@@ -444,6 +454,21 @@ async function generateAI() {
 
         salesBox.textContent =
           data.salesChance || "-";
+
+        riskLevelBox.textContent =
+          data.riskLevel || "-";
+
+        escalationBox.textContent =
+          data.escalationRecommendation ||
+          "Keine Eskalation empfohlen.";
+
+        renderList(
+          riskFlags,
+          data.riskFlags,
+          "riskCard",
+          "Keine besonderen Risiken erkannt.",
+          ""
+        );
 
         // ACTIONS
         renderList(
