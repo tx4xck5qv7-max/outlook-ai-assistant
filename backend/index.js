@@ -19,6 +19,15 @@ const allowedOrigins = new Set([
 const rateLimitWindowMs = 5 * 60 * 1000;
 const rateLimitMaxRequests = 60;
 const requestCounts = new Map();
+const configuredAiTimeoutMs =
+  Number.parseInt(
+    process.env.OPENAI_TIMEOUT_MS || "45000",
+    10
+  );
+const aiTimeoutMs =
+  Number.isFinite(configuredAiTimeoutMs)
+    ? configuredAiTimeoutMs
+    : 45000;
 
 function rateLimit(req, res, next) {
   const now = Date.now();
@@ -99,7 +108,9 @@ app.get("/health", (req, res) => {
     api: "ready",
     privacyPreview: "ready",
     maxEmailLength: 200000,
-    rateLimit: "60 requests per 5 minutes"
+    rateLimit: "60 requests per 5 minutes",
+    aiTimeoutMs,
+    sensitivityDetection: "ready"
   });
 });
 

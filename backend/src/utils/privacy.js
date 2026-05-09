@@ -6,6 +6,11 @@ function sanitizeEmailWithReport(text) {
       report: {
         anonymized: false,
         detected: [],
+        sensitivity: {
+          level: "LOW",
+          categories: [],
+          requiresReview: false
+        },
         originalLength: 0,
         sanitizedLength: 0
       }
@@ -14,6 +19,8 @@ function sanitizeEmailWithReport(text) {
 
   let clean = text;
   const detected = new Set();
+  const sensitivity =
+    detectSensitivity(text);
 
   function mask(pattern, replacement, label) {
     clean = clean.replace(pattern, (...args) => {
@@ -110,9 +117,61 @@ function sanitizeEmailWithReport(text) {
     report: {
       anonymized: detectedItems.length > 0,
       detected: detectedItems,
+      sensitivity,
       originalLength: text.length,
       sanitizedLength: clean.length
     }
+  };
+}
+
+function detectSensitivity(text) {
+  const categories = [];
+
+  const checks = [
+    {
+      name: "HR",
+      pattern: /\b(gehalt|abmahnung|kuendigung|kündigung|bewerbung|personalakte|arbeitsvertrag)\b/i
+    },
+    {
+      name: "Finanzen",
+      pattern: /\b(iban|rechnung|zahlung|budget|kreditkarte|bankverbindung|mahnung)\b/i
+    },
+    {
+      name: "Rechtliches",
+      pattern: /\b(vertrag|nda|klage|anwalt|gericht|haftung|compliance)\b/i
+    },
+    {
+      name: "Medizin",
+      pattern: /\b(krankmeldung|diagnose|arzt|patient|medizin|gesundheit)\b/i
+    },
+    {
+      name: "Zugangsdaten",
+      pattern: /\b(passwort|kennwort|token|api key|secret|zugangsdaten)\b/i
+    },
+    {
+      name: "Vertraulichkeit",
+      pattern: /\b(vertraulich|confidential|nicht weiterleiten|strictly confidential|intern)\b/i
+    }
+  ];
+
+  checks.forEach((check) => {
+    if (check.pattern.test(text)) {
+      categories.push(check.name);
+    }
+  });
+
+  const level =
+    categories.includes("Zugangsdaten") ||
+    categories.length > 1
+      ? "HIGH"
+      : categories.length === 1
+        ? "MEDIUM"
+        : "LOW";
+
+  return {
+    level,
+    categories,
+    requiresReview: level !== "LOW"
   };
 }
 

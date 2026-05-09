@@ -27,6 +27,17 @@ const openAITemperature =
     ? configuredTemperature
     : 0.3;
 
+const configuredTimeoutMs =
+  Number.parseInt(
+    process.env.OPENAI_TIMEOUT_MS || "45000",
+    10
+  );
+
+const openAITimeoutMs =
+  Number.isFinite(configuredTimeoutMs)
+    ? configuredTimeoutMs
+    : 45000;
+
 function getString(value, fallback) {
   return typeof value === "string" && value.trim()
     ? value.trim()
@@ -95,30 +106,34 @@ async function getAIResponse(emailContent) {
   const prompt =
     getEmailAnalysisPrompt(cleanedEmail);
 
-  const completion = await client.chat.completions.create({
+  const completion = await client.chat.completions.create(
+    {
+      model: openAIModel,
 
-    model: openAIModel,
+      store: false,
 
-    store: false,
+      temperature: openAITemperature,
 
-    temperature: openAITemperature,
-
-    response_format: {
-      type: "json_object"
-    },
-
-    messages: [
-      {
-        role: "system",
-        content:
-          "You are a strict JSON API for Outlook email analysis."
+      response_format: {
+        type: "json_object"
       },
-      {
-        role: "user",
-        content: prompt
-      }
-    ]
-  });
+
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are a strict JSON API for Outlook email analysis."
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ]
+    },
+    {
+      timeout: openAITimeoutMs
+    }
+  );
 
   const raw =
     completion.choices[0].message.content;
