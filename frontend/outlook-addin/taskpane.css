@@ -175,6 +175,21 @@ button:hover {
   font-size: 16px;
 }
 
+.primaryCard {
+  border: 1px solid #bfdbfe;
+}
+
+.quickOverviewBox {
+  background: #eef6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  color: #1e3a8a;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  padding: 10px;
+  white-space: pre-wrap;
+}
+
 #summary {
   white-space: pre-wrap;
   line-height: 1.5;

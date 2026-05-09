@@ -305,6 +305,92 @@ function buildApprovalCheck(data, privacy) {
   ].join("\n");
 }
 
+function buildQuickOverview(data, privacy) {
+
+  const safeData =
+    data && typeof data === "object"
+      ? data
+      : {};
+
+  const safePrivacy =
+    privacy && typeof privacy === "object"
+      ? privacy
+      : {};
+
+  const sensitivity =
+    safePrivacy.sensitivity &&
+    typeof safePrivacy.sensitivity === "object"
+      ? safePrivacy.sensitivity
+      : {
+        requiresReview: false
+      };
+
+  const actions =
+    Array.isArray(safeData.actions)
+      ? safeData.actions.filter((item) => (
+        typeof item === "string" &&
+        item.trim().length > 0
+      ))
+      : [];
+
+  const riskLevel =
+    String(safeData.riskLevel || "LOW")
+      .toUpperCase();
+
+  const priority =
+    String(safeData.priority || "MEDIUM")
+      .toUpperCase();
+
+  const confidenceLevel =
+    String(safeData.confidenceLevel || "MEDIUM")
+      .toUpperCase();
+
+  const calendarRisk =
+    String(safeData.calendarConflictRisk || "UNKNOWN")
+      .toUpperCase();
+
+  const calendarRelevance =
+    String(safeData.calendarRelevance || "NO")
+      .toUpperCase();
+
+  const approvalRequired =
+    sensitivity.requiresReview ||
+    riskLevel === "HIGH" ||
+    calendarRisk === "HIGH" ||
+    confidenceLevel === "LOW" ||
+    (
+      priority === "HIGH" &&
+      riskLevel !== "LOW"
+    );
+
+  const calendarStep =
+    calendarRelevance === "YES" ||
+    calendarRelevance === "POSSIBLE" ||
+    calendarRisk === "HIGH" ||
+    calendarRisk === "MEDIUM"
+      ? "Terminbezug vor Zusage pruefen."
+      : "Kein Kalenderabgleich erforderlich.";
+
+  return [
+    `1. ${actions[0] || "Email pruefen und Kontext klaeren."}`,
+    `2. ${
+      approvalRequired
+        ? "Antwort vor Versand intern freigeben lassen."
+        : "Antwort fachlich pruefen und verwenden."
+    }`,
+    `3. ${calendarStep}`,
+    "",
+    `Fokus: ${safeData.emailType || "Unklar"} / ${safeData.recommendedOwner || "Allgemein"}`,
+    `Prioritaet: ${priority}`,
+    `Risiko: ${riskLevel}`,
+    `Freigabe: ${
+      approvalRequired
+        ? "erforderlich"
+        : "Standardprozess"
+    }`
+  ].join("\n");
+}
+
 function setAnalysisProgress(isActive, message) {
 
   const progress =
@@ -702,6 +788,9 @@ async function generateAI() {
   const summary =
     document.getElementById("summary");
 
+  const quickOverviewBox =
+    document.getElementById("quickOverviewBox");
+
   const suggestions =
     document.getElementById("suggestions");
 
@@ -822,6 +911,9 @@ async function generateAI() {
   summary.textContent =
     "Denke nach... Email wird analysiert.";
 
+  quickOverviewBox.textContent =
+    "Empfehlung wird vorbereitet...";
+
   suggestions.innerHTML = "";
   actions.innerHTML = "";
   todos.innerHTML = "";
@@ -871,6 +963,9 @@ async function generateAI() {
     !Office.context.mailbox.item
   ) {
     summary.textContent =
+      "Outlook-Kontext nicht verfuegbar.";
+
+    quickOverviewBox.textContent =
       "Outlook-Kontext nicht verfuegbar.";
 
     status.textContent =
@@ -995,6 +1090,9 @@ async function generateAI() {
           summary.textContent =
             "Sensible Email erkannt. Bitte pruefen und Analyse bewusst bestaetigen.";
 
+          quickOverviewBox.textContent =
+            "Empfehlung erst nach bestaetigter Analyse verfuegbar.";
+
           status.textContent =
             "Analyse pausiert bis zur Bestaetigung.";
 
@@ -1046,6 +1144,12 @@ async function generateAI() {
         summary.textContent =
           data.summary ||
           "Keine belastbare Zusammenfassung erhalten.";
+
+        quickOverviewBox.textContent =
+          buildQuickOverview(
+            data,
+            privacyPreview.privacy
+          );
 
         typeBox.textContent =
           data.emailType || "-";
@@ -1291,6 +1395,9 @@ async function generateAI() {
 
         summary.textContent =
           "Analyse fehlgeschlagen";
+
+        quickOverviewBox.textContent =
+          "Empfehlung nicht erstellt.";
 
         if (!privacyChecked) {
           privacyStatus.textContent =
